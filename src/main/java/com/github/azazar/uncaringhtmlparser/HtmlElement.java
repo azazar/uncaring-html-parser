@@ -18,6 +18,7 @@ package com.github.azazar.uncaringhtmlparser;
 
 import com.github.azazar.uncaringhtmlparser.util.HtmlUtil;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
 
 /**
@@ -57,7 +58,7 @@ public class HtmlElement {
      * @param tagName
      * @return 
      */
-    public HtmlElements byTagName(String tagName) {
+    public Stream<HtmlElement> byTagName(String tagName) {
         return html().byTagName(tagName);
     }
     
@@ -67,12 +68,27 @@ public class HtmlElement {
      * @param name attribute name
      * @return attribute value or null if attribute doesn't exist
      */
-    public String attr(String name) {
+    public String attrOrNull(String name) {
         return HtmlUtil.attributeValue(attrs, name);
+    }
+
+    /**
+     * Extracts attribute value
+     * 
+     * @param name attribute name
+     * @return attribute value or empty string if attribute doesn't exist
+     */
+    public String attr(String name) {
+        String val = attrOrNull(name);
+        return val == null ? "" : val;
+    }
+
+    public boolean hasAttr(String name) {
+        return StringUtils.containsIgnoreCase(attrs, " " + name);
     }
     
     public String id() {
-        return attr("id");
+        return attrOrNull("id");
     }
     
     private String[] classes = null;
@@ -81,7 +97,7 @@ public class HtmlElement {
     
     public boolean hasClass(String className) {
         if (classes == null) {
-            String classAttr = attr("class");
+            String classAttr = attrOrNull("class");
             
             classes = NO_CLASSES;
             

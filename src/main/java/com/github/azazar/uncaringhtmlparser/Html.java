@@ -16,6 +16,10 @@
  */
 package com.github.azazar.uncaringhtmlparser;
 
+import java.util.Spliterators;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
+
 /**
  *
  * @author Mikhail Yevchenko <mail@uo1.net>
@@ -28,8 +32,12 @@ public class Html {
         this.html = html;
     }
     
-    public HtmlElements byTagName(String tagName) {
-        return new HtmlElements(() -> HtmlParser.byTagName(html, tagName));
+    public Stream<HtmlElement> byTagName(String tagName) {
+        return StreamSupport.stream(Spliterators.spliteratorUnknownSize(HtmlParser.byTagName(html, tagName), 0), false);
+    }
+    
+    public Stream<HtmlElement> bySelector(String selector) {
+        return Selector.queryAll(selector, this);
     }
     
     public String getHtml() {

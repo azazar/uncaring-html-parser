@@ -30,8 +30,15 @@ public class HtmlParserTest {
 
     @Test
     public void testIterator() {
-        assertEquals(1, HTML.byTagName("div").stream().filter(e -> "overlib".equals(e.id())).count());
-        assertEquals(1, HTML.byTagName("form").stream().filter(e -> "searchTorrent".equals(e.id())).findAny().get().byTagName("input").stream().filter(e -> e.attr("x-webkit-speech") != null).count());
+        assertEquals(1, HTML.byTagName("div").filter(e -> "overlib".equals(e.id())).count());
+        assertEquals(1, HTML.byTagName("form").filter(e -> "searchTorrent".equals(e.id())).findAny().get().byTagName("input").filter(e -> e.attrOrNull("x-webkit-speech") != null).count());
+        assertEquals(157, HTML.bySelector("a").count());
+        assertEquals(130, HTML.bySelector("a[href]").count());
+        assertEquals(157, HTML.bySelector("body a").count());
+        assertEquals(1, HTML.bySelector("div#overlib").count());
+        assertEquals(1, HTML.bySelector("div[id='overlib']").count());
+        assertEquals(1, HTML.bySelector("html body div#overlib").count());
+        assertEquals(1, HTML.bySelector("html body div[id='overlib']").count());
     }
     
     private static Html HTML = new Html(
