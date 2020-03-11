@@ -58,7 +58,7 @@ public class HtmlElement {
      * @return 
      */
     public HtmlElements byTagName(String tagName) {
-        return html().elements(tagName);
+        return html().byTagName(tagName);
     }
     
     /**

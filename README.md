@@ -9,7 +9,7 @@ matching tags without parsing whole HTML or building it's DOM.
 ```java
 String html = "<a href='http://example.org/' class='link'>";
 
-new Html(html).elements("a").stream().filter(e -> e.hasClass("link")).forEach(e -> {
+new Html(html).byTagName("a").stream().filter(e -> e.hasClass("link")).forEach(e -> {
     System.out.println(e.getTextContent() + " : " + e.attr("href"));
 });
 ```

@@ -28,7 +28,7 @@ public class Html {
         this.html = html;
     }
     
-    public HtmlElements elements(String tagName) {
+    public HtmlElements byTagName(String tagName) {
         return new HtmlElements(() -> HtmlParser.byTagName(html, tagName));
     }
     
