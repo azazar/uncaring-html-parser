@@ -13,3 +13,8 @@ new Html(html).byTagName("a").stream().filter(e -> e.hasClass("link")).forEach(e
     System.out.println(e.getTextContent() + " : " + e.attr("href"));
 });
 ```
+
+## Repositories
+
+I'm not planning to upload it to any public Maven repositories, but it can be
+linked using [JitPack repository](https://jitpack.io/#azazar/uncaring-html-parser/0.9.1 "JitPack repository").
