@@ -44,7 +44,7 @@ public class HtmlParserTest {
         assertNull(HTML.bySelector("html body div[id='invalid_id']").findAny().orElse(null));
         assertNull(HTML.bySelector("html invalidtag").findAny().orElse(null));
         
-        assertEquals(0, HTML2.bySelector("div a[href]").map(e -> e.getTextContent()).toList().size());
+        assertEquals(0, HTML2.bySelector("div a[href]").map(e -> e.getTextContent()).toArray().length);
     }
     
     private static Html HTML = new Html(
