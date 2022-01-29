@@ -16,6 +16,7 @@
  */
 package com.github.azazar.uncaringhtmlparser;
 
+import java.nio.CharBuffer;
 import java.util.Spliterators;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -26,10 +27,14 @@ import java.util.stream.StreamSupport;
  */
 public class Html {
     
-    protected final String html;
+    protected final CharBuffer html;
 
-    public Html(String html) {
+    public Html(CharBuffer html) {
         this.html = html;
+    }
+    
+    public Html(String html) {
+        this.html = CharBuffer.wrap(html);
     }
     
     public Stream<HtmlElement> byTagName(String tagName) {

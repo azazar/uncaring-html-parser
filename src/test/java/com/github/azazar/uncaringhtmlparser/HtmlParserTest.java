@@ -39,6 +39,12 @@ public class HtmlParserTest {
         assertEquals(1, HTML.bySelector("div[id='overlib']").count());
         assertEquals(1, HTML.bySelector("html body div#overlib").count());
         assertEquals(1, HTML.bySelector("html body div[id='overlib']").count());
+        
+        assertEquals(0, HTML.bySelector("html body div[id='invalid_id']").count());
+        assertNull(HTML.bySelector("html body div[id='invalid_id']").findAny().orElse(null));
+        assertNull(HTML.bySelector("html invalidtag").findAny().orElse(null));
+        
+        assertEquals(0, HTML2.bySelector("div a[href]").map(e -> e.getTextContent()).toList().size());
     }
     
     private static Html HTML = new Html(
@@ -250,5 +256,10 @@ public class HtmlParserTest {
         "\n" +
         "	</script>\n" +
         "	</body></html>");
+    
+    private static final Html HTML2 = new Html(
+        "                        <label class=\"label label-success\"><i class=\"icon-check book-status-icon icon-v-middle\"></i> весь текст</label> <span class=\"stats-sep\"></span>\n" +
+        "                        <span><span class=\"hint-top\" data-format=\"calendar-short\" data-hint=\"Весь текст опубликован \" data-time=\"2019-09-05T13:08:47.5270000Z\"></span></span>\n" +
+        "                    <div><span class=\"hint-top\" data-hint=\"Размер, кол-во знаков с пробелами\">1 439 647 зн.</span>, 35,99 <abbr class=\"hint-top\" data-hint=\"Авторский лист - 40 000 печатных знаков\">а.л.</abbr>");
     
 }

@@ -16,6 +16,8 @@
  */
 package com.github.azazar.uncaringhtmlparser;
 
+import com.github.azazar.uncaringhtmlparser.util.LazyCharSequence;
+import java.nio.CharBuffer;
 import java.util.Iterator;
 import org.apache.commons.lang3.StringUtils;
 
@@ -25,7 +27,9 @@ import org.apache.commons.lang3.StringUtils;
  */
 public class HtmlParser {
     
-    public static Iterator<HtmlElement> byTagName(String html, String tagName) {
+    private static final CharBuffer EMPTY_BUFFER = CharBuffer.allocate(0);
+    
+    public static Iterator<HtmlElement> byTagName(CharBuffer html, String tagName) {
         String tagSearch = "<" + tagName;
 
         return new Iterator<HtmlElement>() {
@@ -49,17 +53,25 @@ public class HtmlParser {
                         continue;
                     }
 
-                    int tagEnd = html.indexOf('>', position);
+                    int tagEnd = StringUtils.indexOf(html, '>', position);
 
                     if (tagEnd == -1) {
                         break;
                     }
 
-                    String tagAttrs = html.substring(position, tagEnd);
+                    CharBuffer tagAttrs = html.subSequence(position, tagEnd);
 
                     position = tagEnd + 1;
                     
-                    next = new HtmlElement(tagName, tagAttrs, () -> html.substring(tagEnd + 1, StringUtils.indexOfIgnoreCase(html, "</" + tagName + ">", tagEnd + 1)));
+                    next = new HtmlElement(tagName, tagAttrs, new LazyCharSequence<>(() -> {
+                        var end = StringUtils.indexOfIgnoreCase(html, "</" + tagName + ">", tagEnd + 1);
+                        
+                        if (end == -1)
+                            return EMPTY_BUFFER;
+
+                        return html.subSequence(tagEnd + 1, end);
+                    }));
+
                     return true;
                 }
 

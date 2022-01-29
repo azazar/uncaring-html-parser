@@ -16,6 +16,7 @@
  */
 package com.github.azazar.uncaringhtmlparser.util;
 
+import java.nio.CharBuffer;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.StringEscapeUtils;
 
@@ -29,17 +30,17 @@ public class HtmlUtil {
         return c == ' ' || c == '\t' || c == '\r' || c == '\n';
     }
     
-    public static String stripHtml(String html) {
-        StringBuilder r = new StringBuilder();
+    public static String stripHtml(CharSequence html) {
+        StringBuilder r = new StringBuilder(html.length());
         
         int pos = 0, ofs;
         
-        while ((ofs = html.indexOf('<', pos)) != -1) {
-            r.append(html.substring(pos, ofs));
+        while ((ofs = StringUtils.indexOf(html, '<', pos)) != -1) {
+            r.append(html, pos, ofs);
             
             ofs++;
             
-            int end = html.indexOf('>', ofs);
+            int end = StringUtils.indexOf(html, '>', 0);
             
             if (end == -1) {
                 break;
@@ -48,12 +49,12 @@ public class HtmlUtil {
             pos = end + 1;
         }
         
-        r.append(html.substring(pos));
+        r.append(html, pos, html.length() - pos);
         
         return r.toString().trim();
     }
     
-    public static String attributeValue(String attrs, String attributeName) {
+    public static String attributeValue(CharBuffer attrs, String attributeName) {
         int i = StringUtils.indexOfIgnoreCase(attrs, attributeName);
 
         if (i == -1)
@@ -78,10 +79,10 @@ public class HtmlUtil {
         if (delim == '\'' || delim == '\"') {
             i++;
 
-            attrEnd = attrs.indexOf(delim, i);
+            attrEnd = StringUtils.indexOf(attrs, delim, i);
 
             if (attrEnd != -1)
-                return StringEscapeUtils.unescapeHtml4(attrs.substring(i, attrEnd));
+                return StringEscapeUtils.unescapeHtml4(attrs.subSequence(i, attrEnd).toString());
         }
         else {
             attrEnd = i;
@@ -92,7 +93,7 @@ public class HtmlUtil {
 
                 attrEnd++;
             }
-            return StringEscapeUtils.unescapeHtml4(attrs.substring(i, attrEnd));
+            return StringEscapeUtils.unescapeHtml4(attrs.subSequence(i, attrEnd).toString());
         }
         
         return null;

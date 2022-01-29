@@ -17,6 +17,8 @@
 package com.github.azazar.uncaringhtmlparser;
 
 import com.github.azazar.uncaringhtmlparser.util.HtmlUtil;
+import com.github.azazar.uncaringhtmlparser.util.LazyCharSequence;
+import java.nio.CharBuffer;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
@@ -28,13 +30,13 @@ import org.apache.commons.lang3.StringUtils;
 public class HtmlElement {
     
     private String tagName;
-    private String attrs;
-    private Supplier<String> innerHtmlSupplier;
+    private CharBuffer attrs;
+    private LazyCharSequence<CharBuffer> innerHtml;
 
-    public HtmlElement(String tagName, String attrs, Supplier<String> innerHtmlSupplier) {
+    public HtmlElement(String tagName, CharBuffer attrs, LazyCharSequence<CharBuffer> innerHtml) {
         this.tagName = tagName;
         this.attrs = attrs;
-        this.innerHtmlSupplier = innerHtmlSupplier;
+        this.innerHtml = innerHtml;
     }
     
     private Html html = null;
@@ -45,8 +47,8 @@ public class HtmlElement {
      * @return inner html
      */
     public Html html() {
-        if (html == null) {
-            html = new Html(innerHtmlSupplier.get());
+        if (html == null) {CharBuffer.wrap("asd");
+            html = new Html(innerHtml.get());
         }
         
         return html;
@@ -115,7 +117,7 @@ public class HtmlElement {
     }
     
     public String getTextContent() {
-        return HtmlUtil.stripHtml(innerHtmlSupplier.get());
+        return HtmlUtil.stripHtml(innerHtml.get());
     }
 
     /**
@@ -124,8 +126,6 @@ public class HtmlElement {
      */
     @Override
     public String toString() {
-        String innerHtml = innerHtmlSupplier.get();
-
         return "<" + tagName + (attrs.isEmpty() ? "" : " " + attrs) + (innerHtml.isEmpty() ? "/>" : ">\n" + innerHtml + "\n</" + tagName + ">");
     }
 
