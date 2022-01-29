@@ -17,4 +17,4 @@ new Html(html).bySelector("a.link").filter(a -> a.attr("href").contains("http:")
 ## Repositories
 
 I'm not planning to upload it to any public Maven repositories, but it can be
-linked using [JitPack repository](https://jitpack.io/#azazar/uncaring-html-parser/0.9.2 "JitPack repository").
+linked using [JitPack repository](https://jitpack.io/#azazar/uncaring-html-parser "JitPack repository").
