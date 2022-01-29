@@ -19,7 +19,6 @@ package com.github.azazar.uncaringhtmlparser;
 import com.github.azazar.uncaringhtmlparser.util.HtmlUtil;
 import com.github.azazar.uncaringhtmlparser.util.LazyCharSequence;
 import java.nio.CharBuffer;
-import java.util.function.Supplier;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
 
