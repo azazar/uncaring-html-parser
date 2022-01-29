@@ -125,7 +125,7 @@ public class HtmlElement {
      */
     @Override
     public String toString() {
-        return "<" + tagName + (attrs.isEmpty() ? "" : " " + attrs) + (innerHtml.isEmpty() ? "/>" : ">\n" + innerHtml + "\n</" + tagName + ">");
+        return "<" + tagName + (attrs.length() == 0 ? "" : " " + attrs) + (innerHtml.length() == 0 ? "/>" : ">\n" + innerHtml + "\n</" + tagName + ">");
     }
 
 }
