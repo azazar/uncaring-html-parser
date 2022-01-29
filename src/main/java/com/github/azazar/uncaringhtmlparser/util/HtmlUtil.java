@@ -30,7 +30,7 @@ public class HtmlUtil {
         return c == ' ' || c == '\t' || c == '\r' || c == '\n';
     }
     
-    public static String stripHtml(CharSequence html) {
+    public static CharSequence stripHtml(CharSequence html) {
         StringBuilder r = new StringBuilder(html.length());
         
         int pos = 0, ofs;
@@ -38,9 +38,7 @@ public class HtmlUtil {
         while ((ofs = StringUtils.indexOf(html, '<', pos)) != -1) {
             r.append(html, pos, ofs);
             
-            ofs++;
-            
-            int end = StringUtils.indexOf(html, '>', 0);
+            int end = StringUtils.indexOf(html, '>', ofs + 1);
             
             if (end == -1) {
                 break;
@@ -49,9 +47,9 @@ public class HtmlUtil {
             pos = end + 1;
         }
         
-        r.append(html, pos, html.length() - pos);
+        r.append(html, pos, html.length());
         
-        return r.toString().trim();
+        return r;
     }
     
     public static String attributeValue(CharBuffer attrs, String attributeName) {

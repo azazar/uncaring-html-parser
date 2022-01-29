@@ -116,7 +116,7 @@ public class HtmlElement {
     }
     
     public String getTextContent() {
-        return HtmlUtil.stripHtml(innerHtml.get());
+        return HtmlUtil.stripHtml(innerHtml.get()).toString();
     }
 
     /**
