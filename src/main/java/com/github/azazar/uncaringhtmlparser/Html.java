@@ -48,5 +48,9 @@ public class Html {
     public String getHtml() {
         return html.toString();
     }
+    
+    public CharBuffer getBuffer() {
+        return html.asReadOnlyBuffer();
+    }
 
 }
