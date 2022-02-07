@@ -64,6 +64,16 @@ public class HtmlElement {
     }
     
     /**
+     * Returns all elements matching specified selector
+     * 
+     * @param selector
+     * @return 
+     */
+    public Stream<HtmlElement> bySelector(String selector) {
+        return html().bySelector(selector);
+    }
+    
+    /**
      * Extracts attribute value
      * 
      * @param name attribute name
