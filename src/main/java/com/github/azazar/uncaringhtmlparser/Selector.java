@@ -31,8 +31,11 @@ public class Selector {
         return queryAll(Arrays.asList(StringUtils.split(selector, ' ')), Stream.of(html));
     }
     
-    private static boolean isTag(char c) {
-        return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z');
+    private static boolean isTag(char c, int index) {
+        if (index == 0)
+            return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || c == '_';
+
+        return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || c == '_' || c == '-' || c == '.';
     }
     
     private static Stream<HtmlElement> queryAll(List<String> selector, Stream<Html> htmlStream) {
@@ -45,7 +48,7 @@ public class Selector {
         
         int i = 0;
         
-        while(i < selectorPart.length() && isTag(selectorPart.charAt(i))) {
+        while(i < selectorPart.length() && isTag(selectorPart.charAt(i), i)) {
             i++;
         }
         
