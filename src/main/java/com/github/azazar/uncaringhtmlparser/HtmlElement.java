@@ -46,7 +46,7 @@ public class HtmlElement {
      * @return inner html
      */
     public Html html() {
-        if (html == null) {CharBuffer.wrap("asd");
+        if (html == null) {
             html = new Html(innerHtml.get());
         }
         
