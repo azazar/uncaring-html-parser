@@ -64,7 +64,43 @@ public class HtmlParser {
                     position = tagEnd + 1;
                     
                     next = new HtmlElement(tagName, tagAttrs, new LazyCharSequence<>(() -> {
-                        var end = StringUtils.indexOfIgnoreCase(html, "</" + tagName + ">", tagEnd + 1);
+                        int depth = 0;
+                        int end = -1;
+                        
+                        int rightBoundary = html.length() - tagName.length() - 2;
+                        for(int i = tagEnd + 1; i < rightBoundary;) {
+                            if (html.charAt(i) != '<') {
+                                i++;
+                                continue;
+                            }
+                            
+                            i++;
+                            
+                            if (html.charAt(i) == '/') {
+                                i++;
+                                
+                                if (StringUtils.equalsAnyIgnoreCase(html.subSequence(i, i + tagName.length()), tagName)) {
+                                    depth--;
+
+                                    if (depth == -1) {
+                                        end = i - 2;
+                                        break;
+                                    }
+                                }
+                                
+                                continue;
+                            }
+                            else {
+                                if (StringUtils.equalsAnyIgnoreCase(html.subSequence(i, i + tagName.length()), tagName)) {
+                                    depth++;
+                                    
+                                    i += tagName.length() + 1;
+                                }
+                                else {
+                                    i++;
+                                }
+                            }
+                        }
                         
                         if (end == -1)
                             return EMPTY_BUFFER;

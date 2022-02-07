@@ -30,6 +30,9 @@ public class HtmlParserTest {
 
     @Test
     public void testIterator() {
+        var span1 = HTML3.bySelector("span.c1").findAny().get().html();
+        assertEquals(1, span1.bySelector("span.c3").count());
+
         assertEquals(1, HTML.byTagName("div").filter(e -> "overlib".equals(e.id())).count());
         assertEquals(1, HTML.byTagName("form").filter(e -> "searchTorrent".equals(e.id())).findAny().get().byTagName("input").filter(e -> e.attrOrNull("x-webkit-speech") != null).count());
         assertEquals(157, HTML.bySelector("a").count());
@@ -261,5 +264,8 @@ public class HtmlParserTest {
         "                        <label class=\"label label-success\"><i class=\"icon-check book-status-icon icon-v-middle\"></i> весь текст</label> <span class=\"stats-sep\"></span>\n" +
         "                        <span><span class=\"hint-top\" data-format=\"calendar-short\" data-hint=\"Весь текст опубликован \" data-time=\"2019-09-05T13:08:47.5270000Z\"></span></span>\n" +
         "                    <div><span class=\"hint-top\" data-hint=\"Размер, кол-во знаков с пробелами\">1 439 647 зн.</span>, 35,99 <abbr class=\"hint-top\" data-hint=\"Авторский лист - 40 000 печатных знаков\">а.л.</abbr>");
+
+    private static final Html HTML3 = new Html(
+        "<span class=c1><span class=c2></span><span class=c3></span></span>");
     
 }
