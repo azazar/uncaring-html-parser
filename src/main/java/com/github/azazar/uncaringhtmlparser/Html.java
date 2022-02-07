@@ -37,14 +37,24 @@ public class Html {
         this.html = CharBuffer.wrap(html);
     }
     
-    public Stream<HtmlElement> byTagName(String tagName) {
+    public Stream<HtmlElement> tag(String tagName) {
         return StreamSupport.stream(Spliterators.spliteratorUnknownSize(HtmlParser.byTagName(html, tagName), 0), false);
     }
     
-    public Stream<HtmlElement> bySelector(String selector) {
+    public Stream<HtmlElement> css(String selector) {
         return Selector.queryAll(selector, this);
     }
     
+    @Deprecated
+    public Stream<HtmlElement> byTagName(String tagName) {
+        return tag(tagName);
+    }
+    
+    @Deprecated
+    public Stream<HtmlElement> bySelector(String selector) {
+        return css(selector);
+    }
+
     public String getHtml() {
         return html.toString();
     }

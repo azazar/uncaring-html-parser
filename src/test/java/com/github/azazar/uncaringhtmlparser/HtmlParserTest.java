@@ -30,24 +30,24 @@ public class HtmlParserTest {
 
     @Test
     public void testIterator() {
-        var span1 = HTML3.bySelector("span.c1").findAny().get().html();
-        assertEquals(1, span1.bySelector("span.c3").count());
+        var span1 = HTML3.css("span.c1").findAny().get().html();
+        assertEquals(1, span1.css("span.c3").count());
 
-        assertEquals(1, HTML.byTagName("div").filter(e -> "overlib".equals(e.id())).count());
-        assertEquals(1, HTML.byTagName("form").filter(e -> "searchTorrent".equals(e.id())).findAny().get().byTagName("input").filter(e -> e.attrOrNull("x-webkit-speech") != null).count());
-        assertEquals(157, HTML.bySelector("a").count());
-        assertEquals(130, HTML.bySelector("a[href]").count());
-        assertEquals(157, HTML.bySelector("body a").count());
-        assertEquals(1, HTML.bySelector("div#overlib").count());
-        assertEquals(1, HTML.bySelector("div[id='overlib']").count());
-        assertEquals(1, HTML.bySelector("html body div#overlib").count());
-        assertEquals(1, HTML.bySelector("html body div[id='overlib']").count());
+        assertEquals(1, HTML.tag("div").filter(e -> "overlib".equals(e.id())).count());
+        assertEquals(1, HTML.tag("form").filter(e -> "searchTorrent".equals(e.id())).findAny().get().tag("input").filter(e -> e.attrOrNull("x-webkit-speech") != null).count());
+        assertEquals(157, HTML.css("a").count());
+        assertEquals(130, HTML.css("a[href]").count());
+        assertEquals(157, HTML.css("body a").count());
+        assertEquals(1, HTML.css("div#overlib").count());
+        assertEquals(1, HTML.css("div[id='overlib']").count());
+        assertEquals(1, HTML.css("html body div#overlib").count());
+        assertEquals(1, HTML.css("html body div[id='overlib']").count());
         
-        assertEquals(0, HTML.bySelector("html body div[id='invalid_id']").count());
-        assertNull(HTML.bySelector("html body div[id='invalid_id']").findAny().orElse(null));
-        assertNull(HTML.bySelector("html invalidtag").findAny().orElse(null));
+        assertEquals(0, HTML.css("html body div[id='invalid_id']").count());
+        assertNull(HTML.css("html body div[id='invalid_id']").findAny().orElse(null));
+        assertNull(HTML.css("html invalidtag").findAny().orElse(null));
         
-        assertEquals(0, HTML2.bySelector("div a[href]").map(e -> e.getTextContent()).toArray().length);
+        assertEquals(0, HTML2.css("div a[href]").map(e -> e.getTextContent()).toArray().length);
     }
     
     private static Html HTML = new Html(

@@ -59,8 +59,8 @@ public class HtmlElement {
      * @param tagName
      * @return 
      */
-    public Stream<HtmlElement> byTagName(String tagName) {
-        return html().byTagName(tagName);
+    public Stream<HtmlElement> tag(String tagName) {
+        return html().tag(tagName);
     }
     
     /**
@@ -69,10 +69,20 @@ public class HtmlElement {
      * @param selector
      * @return 
      */
-    public Stream<HtmlElement> bySelector(String selector) {
-        return html().bySelector(selector);
+    public Stream<HtmlElement> css(String selector) {
+        return html().css(selector);
+    }
+
+    @Deprecated
+    public Stream<HtmlElement> byTagName(String tagName) {
+        return tag(tagName);
     }
     
+    @Deprecated
+    public Stream<HtmlElement> bySelector(String selector) {
+        return css(selector);
+    }
+
     /**
      * Extracts attribute value
      * 

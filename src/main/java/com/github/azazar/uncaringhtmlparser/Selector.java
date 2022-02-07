@@ -55,7 +55,7 @@ public class Selector {
         
         String tagName = selectorPart.substring(0, i);
         
-        Stream<HtmlElement> elements = htmlStream.flatMap(h -> h.byTagName(tagName));
+        Stream<HtmlElement> elements = htmlStream.flatMap(h -> h.tag(tagName));
         
         selectorPart = selectorPart.substring(i);
         
