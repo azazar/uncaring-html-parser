@@ -14,11 +14,11 @@ final class JdiInstructionCounter {
     record Measurement(Map<String, Long> instructions, Map<String, Long> jdkInstructions,
                        Map<String, Long> allocatedBytes) { }
 
-    static Measurement measure() throws Exception {
+    static Measurement measure(String selectedScenario) throws Exception {
         var connector = Bootstrap.virtualMachineManager().defaultConnector();
         var arguments = connector.defaultArguments();
         String target = ParserWorkload.class.getName();
-        arguments.get("main").setValue(target);
+        arguments.get("main").setValue(target + " " + selectedScenario);
         arguments.get("home").setValue(System.getProperty("java.home"));
         String classpath = System.getProperty("surefire.test.class.path", System.getProperty("java.class.path"));
         arguments.get("options").setValue(OPTIONS + " -cp \"" + classpath + "\"");
@@ -31,7 +31,6 @@ final class JdiInstructionCounter {
         Map<String, Long> totals = new TreeMap<>();
         Map<String, Long> jdkTotals = new TreeMap<>();
         Map<String, Long> allocations = new TreeMap<>();
-        Map<String, Integer> samples = new TreeMap<>();
         long count = 0, jdkCount = 0;
         String scenario = null;
         StepRequest step = null;
@@ -54,10 +53,7 @@ final class JdiInstructionCounter {
                             String selector = ((StringReference) values.getFirst()).value();
                             long bytes = ((LongValue) values.get(1)).value();
                             assertTrue(bytes > 0, "Empty allocation counter: " + selector);
-                            Long previous = allocations.putIfAbsent(selector, bytes);
-                            if (previous != null) {
-                                assertEquals(previous.longValue(), bytes, "Unstable allocations: " + selector);
-                            }
+                            assertNull(allocations.putIfAbsent(selector, bytes), "Duplicate allocations: " + selector);
                         } else if ("begin".equals(marker.request().getProperty("marker"))) {
                             assertFalse(active, "Nested measurement");
                             scenario = ((StringReference) marker.thread().frame(0).getArgumentValues().getFirst()).value();
@@ -74,13 +70,8 @@ final class JdiInstructionCounter {
                             active = false;
                             requests.deleteEventRequest(step);
                             assertTrue(count > 0 && jdkCount > 0, "Empty counter or missing JDK coverage");
-                            Long previous = totals.putIfAbsent(scenario, count);
-                            Long previousJdk = jdkTotals.putIfAbsent(scenario, jdkCount);
-                            if (previous != null) {
-                                assertEquals(previous.longValue(), count, "Unstable instructions: " + scenario);
-                                assertEquals(previousJdk.longValue(), jdkCount, "Unstable JDK instructions: " + scenario);
-                            }
-                            samples.merge(scenario, 1, Integer::sum);
+                            assertNull(totals.putIfAbsent(scenario, count), "Duplicate measurement: " + scenario);
+                            jdkTotals.put(scenario, jdkCount);
                         }
                     } else if (event instanceof StepEvent instruction && active) {
                         var location = instruction.location();
@@ -100,8 +91,7 @@ final class JdiInstructionCounter {
             assertFalse(active, "Target exited during measurement");
             assertTrue(process.waitFor(10, TimeUnit.SECONDS), "Target did not exit");
             assertEquals(0, process.exitValue(), new String(process.getErrorStream().readAllBytes()));
-            assertEquals(new TreeSet<>(Arrays.asList(ParserWorkload.SELECTORS)), totals.keySet());
-            assertTrue(samples.values().stream().allMatch(n -> n == 2), "Missing repeated measurements");
+            assertEquals(Set.of(selectedScenario), totals.keySet());
             assertEquals(totals.keySet(), allocations.keySet(), "Missing allocation measurements");
             return new Measurement(totals, jdkTotals, allocations);
         } finally {

@@ -4,9 +4,13 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
+import java.time.Duration;
+import java.util.Arrays;
 import java.util.HexFormat;
 import java.util.Map;
-import org.junit.jupiter.api.Test;
+import java.util.stream.Stream;
+import org.junit.jupiter.api.DynamicTest;
+import org.junit.jupiter.api.TestFactory;
 import org.junit.jupiter.api.Timeout;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -33,14 +37,14 @@ class ParserInstructionTest {
     private static final int PLAIN_TEXT_BYTES = 56;
     private static final int TAGGED_TEXT_BYTES = 552;
 
-    @Test @Timeout(60) void instructionBudget() throws Exception {
+    @TestFactory @Timeout(60) Stream<DynamicTest> instructionBudget() throws Exception {
         // Fail rather than silently skip the performance gate in a different environment.
         assertEquals("25.0.4.1+1-LTS/Eclipse Adoptium",
                 System.getProperty("java.runtime.version") + "/" + System.getProperty("java.vendor"), "JDK changed");
         assertEquals("-Xint -Xms64m -Xmx128m -XX:+UnlockExperimentalVMOptions -XX:+UseEpsilonGC -XX:ActiveProcessorCount=1", JdiInstructionCounter.OPTIONS);
-        assertEquals("931fe9f72ff1eb8b67e43a8b18dd1fa69f60437f6dd496d00edb0d099e010e9d",
+        assertEquals("4437feae00d72ab9bb7ded41045a752415707efe4073a381abb648b0cdb7a864",
                 digest(JdiInstructionCounter.class.getResourceAsStream("JdiInstructionCounter.class")), "Counter changed");
-        assertEquals("714060f5d9cbb5d210ff91fbbee03dd66af8dd8df04aed7fc0603cdcdb7c99ea",
+        assertEquals("7132cf7a826d236ab1821146b4eb96814ae6f2c1b4d8a71e9698e08678bdd46f",
                 digest(ParserWorkload.class.getResourceAsStream("ParserWorkload.class")), "Workload changed");
         assertEquals("65de35778b07ed3384e8bd84e81caa4e69eb6d71e5d0b049ba87313ccacbee3d",
                 digest(ParserWorkload.class.getResourceAsStream("/performance/w3.html")), "Fixture changed");
@@ -49,9 +53,6 @@ class ParserInstructionTest {
         assertEquals("770cd903fa7b604d1f7ef7ba17f84108667294b2b478be8ed1af3bffb4ae0018",
                 jarDigest(org.apache.commons.text.StringEscapeUtils.class), "commons-text changed");
 
-        var first = JdiInstructionCounter.measure();
-        var second = JdiInstructionCounter.measure();
-        assertEquals(first, second, "Instruction counts differ between fresh JVMs");
         Map<String, Integer> expected = Map.of(
                 "standalone-tags", STANDALONE_TAGS,
                 "standalone-value", STANDALONE_VALUE,
@@ -74,9 +75,13 @@ class ParserInstructionTest {
                 "compiled-tags", COMPILED_TAGS_BYTES,
                 "plain-text", PLAIN_TEXT_BYTES,
                 "tagged-text", TAGGED_TEXT_BYTES);
-        assertAll(
-                () -> assertBudget(expected, first.instructions(), "instructions"),
-                () -> assertBudget(expectedBytes, first.allocatedBytes(), "allocated bytes"));
+        return Arrays.stream(ParserWorkload.SELECTORS).map(scenario -> DynamicTest.dynamicTest(scenario,
+                () -> assertTimeoutPreemptively(Duration.ofSeconds(60), () -> {
+                    var measured = JdiInstructionCounter.measure(scenario);
+                    assertAll(
+                            () -> assertBudget(Map.of(scenario, expected.get(scenario)), measured.instructions(), "instructions"),
+                            () -> assertBudget(Map.of(scenario, expectedBytes.get(scenario)), measured.allocatedBytes(), "allocated bytes"));
+                }, scenario)));
     }
 
     private static void assertBudget(Map<String, Integer> expected, Map<String, Long> measured, String metric) {

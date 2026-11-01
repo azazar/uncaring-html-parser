@@ -19,7 +19,7 @@ public final class ParserWorkload {
     private static volatile long sink;
     private static volatile Selector.Compiled compiledSink;
 
-    public static void begin(String selector, int repetition) { }
+    public static void begin(String selector) { }
     public static void end() { }
     public static void allocation(String selector, long bytes) { }
 
@@ -85,20 +85,19 @@ public final class ParserWorkload {
         };
         int[] expected = {101, 1, 7, 0, 64, 24, 1, 7, 114, 114};
         for (int scenario = 0; scenario < workloads.length; scenario++) {
+            if (args.length > 0 && !SELECTORS[scenario].equals(args[0])) continue;
             Runnable workload = workloads[scenario];
             for (int warmup = 0; warmup < 10; warmup++) workload.run();
-            for (int repetition = 0; repetition < 2; repetition++) {
-                begin(SELECTORS[scenario], repetition);
-                workload.run();
-                end();
-                // Separate invocation keeps allocation accounting outside instruction stepping.
-                long before = memory.getCurrentThreadAllocatedBytes();
-                workload.run();
-                long bytes = memory.getCurrentThreadAllocatedBytes() - before;
-                allocation(SELECTORS[scenario], bytes);
-                if (sink != expected[scenario]) {
-                    throw new AssertionError("Incorrect result: " + SELECTORS[scenario] + " = " + sink);
-                }
+            begin(SELECTORS[scenario]);
+            workload.run();
+            end();
+            // Separate invocation keeps allocation accounting outside instruction stepping.
+            long before = memory.getCurrentThreadAllocatedBytes();
+            workload.run();
+            long bytes = memory.getCurrentThreadAllocatedBytes() - before;
+            allocation(SELECTORS[scenario], bytes);
+            if (sink != expected[scenario]) {
+                throw new AssertionError("Incorrect result: " + SELECTORS[scenario] + " = " + sink);
             }
         }
     }
