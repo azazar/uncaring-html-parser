@@ -13,9 +13,10 @@ production library targets Java 11; tests target Java 25.
 ## Measurement
 
 The JUnit test launches an isolated JVM through the JDK's JDI launching
-connector. The target uses `-Xint`, a fixed heap, Serial GC and one reported
+connector. The target uses `-Xint`, a fixed heap, Epsilon GC and one reported
 processor. The JDK's bundled JDWP debugger supplies `STEP_MIN` / `STEP_INTO`
 events. We do not implement instrumentation or ship a native library.
+Epsilon never reclaims memory; the heap must fit the entire short-lived run.
 
 Stepping is enabled only on the workload thread, between two marker methods.
 **No class exclusion filters are installed.** Parser code, dependencies,
@@ -35,6 +36,13 @@ must match exactly. There is no averaging or timing tolerance. The timeout is
 only a hang watchdog, not a performance metric. The full test took about one
 minute in the development environment.
 
+Allocated heap bytes are measured separately around another invocation of the
+same query, using `ThreadMXBean.getCurrentThreadAllocatedBytes()`. This includes
+allocations by dependencies and JDK code on the workload thread. Accounting is
+outside instruction stepping. The API specifies approximate values; the test
+requires exact agreement across repeats and fresh JVMs on the pinned JDK.
+Instructions and allocated bytes have independent budgets, with no weighted sum.
+
 During migration, JDI was checked against the previous JVMTI counter on the
 same query invocations. Their counts differed by exactly three Java instructions
 introduced by the validation wrapper for all three selectors and both repeats.
@@ -43,7 +51,8 @@ bodies fails this project's required coverage.
 
 ## Baseline ratchet
 
-The baseline is eight `static final int` constants in `ParserInstructionTest`.
+The baselines are `static final int` constants in `ParserInstructionTest`, one
+instruction count and one allocated-byte count per selector.
 JUnit `assertEquals` checks every scenario, and `assertAll` reports all mismatches.
 No baseline or report files are read or written.
 

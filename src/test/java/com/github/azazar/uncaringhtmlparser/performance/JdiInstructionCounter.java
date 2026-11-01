@@ -9,9 +9,10 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /** Uses the JDK's debugger backend, with no custom agent or bytecode rewriting. */
 final class JdiInstructionCounter {
-    static final String OPTIONS = "-Xint -Xms64m -Xmx128m -XX:+UseSerialGC -XX:ActiveProcessorCount=1";
+    static final String OPTIONS = "-Xint -Xms64m -Xmx128m -XX:+UnlockExperimentalVMOptions -XX:+UseEpsilonGC -XX:ActiveProcessorCount=1";
 
-    record Measurement(Map<String, Long> instructions, Map<String, Long> jdkInstructions) { }
+    record Measurement(Map<String, Long> instructions, Map<String, Long> jdkInstructions,
+                       Map<String, Long> allocatedBytes) { }
 
     static Measurement measure() throws Exception {
         var connector = Bootstrap.virtualMachineManager().defaultConnector();
@@ -29,6 +30,7 @@ final class JdiInstructionCounter {
         prepare.enable();
         Map<String, Long> totals = new TreeMap<>();
         Map<String, Long> jdkTotals = new TreeMap<>();
+        Map<String, Long> allocations = new TreeMap<>();
         Map<String, Integer> samples = new TreeMap<>();
         long count = 0, jdkCount = 0;
         String scenario = null;
@@ -40,7 +42,7 @@ final class JdiInstructionCounter {
                 assertNotNull(events, "Target JVM stopped responding");
                 for (Event event : events) {
                     if (event instanceof ClassPrepareEvent prepared) {
-                        for (String name : List.of("begin", "end")) {
+                        for (String name : List.of("begin", "end", "allocation")) {
                             var marker = requests.createBreakpointRequest(prepared.referenceType().methodsByName(name).getFirst().location());
                             marker.setSuspendPolicy(EventRequest.SUSPEND_EVENT_THREAD);
                             marker.putProperty("marker", name);
@@ -48,7 +50,16 @@ final class JdiInstructionCounter {
                         }
                         prepare.disable();
                     } else if (event instanceof BreakpointEvent marker) {
-                        if ("begin".equals(marker.request().getProperty("marker"))) {
+                        if ("allocation".equals(marker.request().getProperty("marker"))) {
+                            var values = marker.thread().frame(0).getArgumentValues();
+                            String selector = ((StringReference) values.getFirst()).value();
+                            long bytes = ((LongValue) values.get(1)).value();
+                            assertTrue(bytes > 0, "Empty allocation counter: " + selector);
+                            Long previous = allocations.putIfAbsent(selector, bytes);
+                            if (previous != null) {
+                                assertEquals(previous.longValue(), bytes, "Unstable allocations: " + selector);
+                            }
+                        } else if ("begin".equals(marker.request().getProperty("marker"))) {
                             assertFalse(active, "Nested measurement");
                             scenario = ((StringReference) marker.thread().frame(0).getArgumentValues().getFirst()).value();
                             count = 0;
@@ -92,7 +103,8 @@ final class JdiInstructionCounter {
             assertEquals(0, process.exitValue(), new String(process.getErrorStream().readAllBytes()));
             assertEquals(new TreeSet<>(Arrays.asList(ParserWorkload.SELECTORS)), totals.keySet());
             assertTrue(samples.values().stream().allMatch(n -> n == 2), "Missing repeated measurements");
-            return new Measurement(totals, jdkTotals);
+            assertEquals(totals.keySet(), allocations.keySet(), "Missing allocation measurements");
+            return new Measurement(totals, jdkTotals, allocations);
         } finally {
             if (process.isAlive()) process.destroyForcibly();
             try { vm.dispose(); } catch (VMDisconnectedException ignored) { }

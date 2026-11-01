@@ -20,14 +20,23 @@ class ParserInstructionTest {
     private static final int DESCENDANT = 113_680;
     private static final int MISSING_TAG = 38_479;
 
+    private static final int UPPERCASE_TAG_BYTES = 1_256;
+    private static final int TAG_BYTES = 1_256;
+    private static final int CLASS_BYTES = 2_608;
+    private static final int ATTRIBUTE_VALUE_BYTES = 2_264;
+    private static final int ATTRIBUTE_BYTES = 1_568;
+    private static final int MISSING_ATTRIBUTE_BYTES = 1_576;
+    private static final int DESCENDANT_BYTES = 3_240;
+    private static final int MISSING_TAG_BYTES = 576;
+
     @Test @Timeout(180) void instructionBudget() throws Exception {
         // Fail rather than silently skip the performance gate in a different environment.
         assertEquals("25.0.4.1+1-LTS/Eclipse Adoptium",
                 System.getProperty("java.runtime.version") + "/" + System.getProperty("java.vendor"), "JDK changed");
-        assertEquals("-Xint -Xms64m -Xmx128m -XX:+UseSerialGC -XX:ActiveProcessorCount=1", JdiInstructionCounter.OPTIONS);
-        assertEquals("8881c85c011297c5b5e5946937ed814fcceedc723884fb0884c0cfe09f27bf4f",
+        assertEquals("-Xint -Xms64m -Xmx128m -XX:+UnlockExperimentalVMOptions -XX:+UseEpsilonGC -XX:ActiveProcessorCount=1", JdiInstructionCounter.OPTIONS);
+        assertEquals("ec88f6e6634ca92b9ba489f48a06e83e559d8f7bbc820f834c42ce2da060cfec",
                 digest(JdiInstructionCounter.class.getResourceAsStream("JdiInstructionCounter.class")), "Counter changed");
-        assertEquals("38f3303174da668a92aa46d7d97b24a4d1272b5f7b568ca85e23f5a2ae716e14",
+        assertEquals("64e12dea6d092ccb54c2d2d78c0e9e2ac8ac653f54a083877f23bffb1afbbe24",
                 digest(ParserWorkload.class.getResourceAsStream("ParserWorkload.class")), "Workload changed");
         assertEquals("4eeeae8d20c078abb64b015ec158add383ac581571cddc45c68f0c9ae0230720",
                 jarDigest(org.apache.commons.lang3.StringUtils.class), "commons-lang3 changed");
@@ -41,13 +50,23 @@ class ParserInstructionTest {
                 "A", UPPERCASE_TAG, "a", TAG, "a.link", CLASS,
                 "a[class='link']", ATTRIBUTE_VALUE, "a[href]", ATTRIBUTE,
                 "a[missing]", MISSING_ATTRIBUTE, "div a", DESCENDANT, "missing", MISSING_TAG);
-        assertEquals(expected.keySet(), first.instructions().keySet(), "Scenarios changed");
+        Map<String, Integer> expectedBytes = Map.of(
+                "A", UPPERCASE_TAG_BYTES, "a", TAG_BYTES, "a.link", CLASS_BYTES,
+                "a[class='link']", ATTRIBUTE_VALUE_BYTES, "a[href]", ATTRIBUTE_BYTES,
+                "a[missing]", MISSING_ATTRIBUTE_BYTES, "div a", DESCENDANT_BYTES, "missing", MISSING_TAG_BYTES);
+        assertAll(
+                () -> assertBudget(expected, first.instructions(), "instructions"),
+                () -> assertBudget(expectedBytes, first.allocatedBytes(), "allocated bytes"));
+    }
+
+    private static void assertBudget(Map<String, Integer> expected, Map<String, Long> measured, String metric) {
+        assertEquals(expected.keySet(), measured.keySet(), "Scenarios changed");
         assertAll(expected.entrySet().stream().map(entry -> () -> {
-            long actual = first.instructions().get(entry.getKey());
-            assertEquals(entry.getValue().longValue(), actual, () -> entry.getKey() + ": "
+            long actual = measured.get(entry.getKey());
+            assertEquals(entry.getValue().longValue(), actual, () -> entry.getKey() + " " + metric + ": "
                     + (actual < entry.getValue()
                     ? "UPDATE_REQUIRED: lower the corresponding static final int to " + actual
-                    : "REGRESSION: instruction count increased"));
+                    : "REGRESSION: " + metric + " increased"));
         }));
     }
 
