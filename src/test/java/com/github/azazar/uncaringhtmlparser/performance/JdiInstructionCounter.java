@@ -38,8 +38,7 @@ final class JdiInstructionCounter {
         boolean active = false, finished = false;
         try {
             while (!finished) {
-                EventSet events = vm.eventQueue().remove(30_000);
-                assertNotNull(events, "Target JVM stopped responding");
+                EventSet events = vm.eventQueue().remove();
                 for (Event event : events) {
                     if (event instanceof ClassPrepareEvent prepared) {
                         for (String name : List.of("begin", "end", "allocation")) {

@@ -38,7 +38,7 @@ class ParserInstructionTest {
         assertEquals("25.0.4.1+1-LTS/Eclipse Adoptium",
                 System.getProperty("java.runtime.version") + "/" + System.getProperty("java.vendor"), "JDK changed");
         assertEquals("-Xint -Xms64m -Xmx128m -XX:+UnlockExperimentalVMOptions -XX:+UseEpsilonGC -XX:ActiveProcessorCount=1", JdiInstructionCounter.OPTIONS);
-        assertEquals("ec88f6e6634ca92b9ba489f48a06e83e559d8f7bbc820f834c42ce2da060cfec",
+        assertEquals("931fe9f72ff1eb8b67e43a8b18dd1fa69f60437f6dd496d00edb0d099e010e9d",
                 digest(JdiInstructionCounter.class.getResourceAsStream("JdiInstructionCounter.class")), "Counter changed");
         assertEquals("714060f5d9cbb5d210ff91fbbee03dd66af8dd8df04aed7fc0603cdcdb7c99ea",
                 digest(ParserWorkload.class.getResourceAsStream("ParserWorkload.class")), "Workload changed");
