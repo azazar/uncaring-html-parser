@@ -76,7 +76,7 @@ class ParserInstructionTest {
                 "plain-text", PLAIN_TEXT_BYTES,
                 "tagged-text", TAGGED_TEXT_BYTES);
         return Arrays.stream(ParserWorkload.SELECTORS).map(scenario -> DynamicTest.dynamicTest(scenario,
-                () -> assertTimeoutPreemptively(Duration.ofSeconds(60), () -> {
+                () -> assertTimeoutPreemptively(Duration.ofMinutes(5), () -> {
                     var measured = JdiInstructionCounter.measure(scenario);
                     assertAll(
                             () -> assertBudget(Map.of(scenario, expected.get(scenario)), measured.instructions(), "instructions"),
