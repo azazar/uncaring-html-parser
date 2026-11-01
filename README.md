@@ -1,10 +1,10 @@
 # Uncaring HTML Parser
 
-HTML parser that intend to be fast, but I didn't benchmark it yet. And it's yet
-to be documented. And it doesn't parse all HTML. It searches given HTML for
-matching tags without parsing whole HTML or building it's DOM.
+An HTML parser designed for speed, though I haven't benchmarked it yet.
+Documentation is still pending. It searches HTML for matching tags without
+parsing the entire document or building a DOM.
 
-# Example usage
+## Example usage
 
 ```java
 String html = "<a href='http://example.org/' class='link'>";
@@ -16,9 +16,5 @@ new Html(html).css("a.link").filter(a -> a.attr("href").contains("http:")).forEa
 
 ## Repositories
 
-I'm not planning to upload it to any public Maven repositories, but it can be
-linked using [JitPack repository](https://jitpack.io/#azazar/uncaring-html-parser "JitPack repository").
-## Development
-
-Run `mvn test` with the pinned JDK 25 to execute correctness and instruction-regression tests.
-The library itself targets Java 11.
+I don't plan to publish the library to public Maven repositories, but you can
+add it as a dependency via [JitPack](https://jitpack.io/#azazar/uncaring-html-parser).
