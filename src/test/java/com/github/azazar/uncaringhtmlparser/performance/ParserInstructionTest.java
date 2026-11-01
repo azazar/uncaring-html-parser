@@ -13,9 +13,9 @@ import static org.junit.jupiter.api.Assertions.*;
 class ParserInstructionTest {
     private static final int UPPERCASE_TAG = 45_548;
     private static final int TAG = 45_259;
-    private static final int CLASS = 85_489;
-    private static final int ATTRIBUTE_VALUE = 84_591;
-    private static final int ATTRIBUTE = 55_722;
+    private static final int CLASS = 84_699;
+    private static final int ATTRIBUTE_VALUE = 83_801;
+    private static final int ATTRIBUTE = 55_147;
     private static final int MISSING_ATTRIBUTE = 75_325;
     private static final int DESCENDANT = 113_022;
     private static final int MISSING_TAG = 38_081;

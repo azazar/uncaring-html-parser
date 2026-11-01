@@ -70,10 +70,10 @@ public class HtmlUtil {
             }
             boolean match = i - start == attributeName.length()
                     && matches(attrs, start, attributeName);
-            while (i < length && isSpace(attrs.charAt(i))) i++;
             if (match) {
                 return start;
             }
+            while (i < length && isSpace(attrs.charAt(i))) i++;
             if (i < length && attrs.charAt(i) == '=') {
                 i++;
                 while (i < length && isSpace(attrs.charAt(i))) i++;
@@ -105,17 +105,18 @@ public class HtmlUtil {
         int i = attributePosition(attrs, attributeName);
         if (i < 0) return null;
 
+        int length = attrs.length();
         i += attributeName.length();
 
-        while (i < attrs.length() && isSpace(attrs.charAt(i))) i++;
+        while (i < length && isSpace(attrs.charAt(i))) i++;
 
-        if (i == attrs.length() || attrs.charAt(i) != '=') return null;
+        if (i == length || attrs.charAt(i) != '=') return null;
 
         i++;
 
-        while (i < attrs.length() && isSpace(attrs.charAt(i))) i++;
+        while (i < length && isSpace(attrs.charAt(i))) i++;
 
-        if (i == attrs.length()) return null;
+        if (i == length) return null;
 
         char delim = attrs.charAt(i);
 
@@ -131,7 +132,7 @@ public class HtmlUtil {
         }
         else {
             attrEnd = i;
-            while (attrEnd < attrs.length()) {
+            while (attrEnd < length) {
                 if (isSpace(attrs.charAt(attrEnd))) {
                     break;
                 }
