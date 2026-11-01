@@ -54,25 +54,34 @@ public class HtmlUtil {
     }
     
     public static int attributePosition(CharBuffer attrs, String attributeName) {
+        int length = attrs.length();
         int i = 0;
-        while (i < attrs.length()) {
-            while (i < attrs.length() && (isSpace(attrs.charAt(i)) || attrs.charAt(i) == '/')) i++;
+        while (i < length) {
+            while (i < length) {
+                char c = attrs.charAt(i);
+                if (!isSpace(c) && c != '/') break;
+                i++;
+            }
             int start = i;
-            while (i < attrs.length() && !isSpace(attrs.charAt(i)) && attrs.charAt(i) != '=' && attrs.charAt(i) != '/') i++;
+            while (i < length) {
+                char c = attrs.charAt(i);
+                if (isSpace(c) || c == '=' || c == '/') break;
+                i++;
+            }
             boolean match = i - start == attributeName.length()
                     && matches(attrs, start, attributeName);
-            while (i < attrs.length() && isSpace(attrs.charAt(i))) i++;
+            while (i < length && isSpace(attrs.charAt(i))) i++;
             if (match) {
                 return start;
             }
-            if (i < attrs.length() && attrs.charAt(i) == '=') {
+            if (i < length && attrs.charAt(i) == '=') {
                 i++;
-                while (i < attrs.length() && isSpace(attrs.charAt(i))) i++;
-                if (i < attrs.length() && (attrs.charAt(i) == '\'' || attrs.charAt(i) == '"')) {
+                while (i < length && isSpace(attrs.charAt(i))) i++;
+                if (i < length && (attrs.charAt(i) == '\'' || attrs.charAt(i) == '"')) {
                     char quote = attrs.charAt(i++);
-                    while (i < attrs.length() && attrs.charAt(i) != quote) i++;
-                    if (i < attrs.length()) i++;
-                } else while (i < attrs.length() && !isSpace(attrs.charAt(i))) i++;
+                    while (i < length && attrs.charAt(i) != quote) i++;
+                    if (i < length) i++;
+                } else while (i < length && !isSpace(attrs.charAt(i))) i++;
             }
         }
         return -1;

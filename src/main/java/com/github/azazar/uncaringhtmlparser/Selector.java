@@ -18,6 +18,7 @@ package com.github.azazar.uncaringhtmlparser;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
 
@@ -28,7 +29,7 @@ import org.apache.commons.lang3.StringUtils;
 public class Selector {
     
     public static Stream<HtmlElement> queryAll(String selector, Html html) {
-        return queryAll(Arrays.asList(StringUtils.split(selector, ' ')), Stream.of(html));
+        return queryAll(Arrays.asList(StringUtils.split(selector, ' ')), html::tag);
     }
     
     private static boolean isTag(char c, int index) {
@@ -38,7 +39,7 @@ public class Selector {
         return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_' || c == '-';
     }
     
-    private static Stream<HtmlElement> queryAll(List<String> selector, Stream<Html> htmlStream) {
+    private static Stream<HtmlElement> queryAll(List<String> selector, Function<String, Stream<HtmlElement>> find) {
         if (selector.isEmpty())
             throw new IllegalArgumentException("The provided selector is empty");
         
@@ -58,7 +59,7 @@ public class Selector {
         
         String tagName = selectorPart.substring(0, i);
         
-        Stream<HtmlElement> elements = htmlStream.flatMap(h -> h.tag(tagName));
+        Stream<HtmlElement> elements = find.apply(tagName);
         
         selectorPart = selectorPart.substring(i);
         
@@ -74,9 +75,13 @@ public class Selector {
         }
         
         while (selectorPart.startsWith("[") || selectorPart.startsWith(".")) {
-            int partEnd = StringUtils.indexOfAny(selectorPart.substring(1), ".[(");
-            if (partEnd != -1) {
-                partEnd++;
+            int partEnd = -1;
+            for (int p = 1; p < selectorPart.length(); p++) {
+                char c = selectorPart.charAt(p);
+                if (c == '.' || c == '[' || c == '(') {
+                    partEnd = p;
+                    break;
+                }
             }
             String part;
             
@@ -126,7 +131,8 @@ public class Selector {
         if (selector.isEmpty())
             return elements;
         
-        return queryAll(selector, elements.map(e -> e.html()));
+        Stream<HtmlElement> parents = elements;
+        return queryAll(selector, name -> parents.flatMap(e -> e.tag(name)));
     }
     
 }

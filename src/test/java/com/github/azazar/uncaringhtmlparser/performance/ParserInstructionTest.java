@@ -11,23 +11,23 @@ import org.junit.jupiter.api.Timeout;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ParserInstructionTest {
-    private static final int UPPERCASE_TAG = 45_946;
-    private static final int TAG = 45_657;
-    private static final int CLASS = 99_714;
-    private static final int ATTRIBUTE_VALUE = 98_924;
-    private static final int ATTRIBUTE = 61_794;
-    private static final int MISSING_ATTRIBUTE = 90_348;
-    private static final int DESCENDANT = 113_680;
-    private static final int MISSING_TAG = 38_479;
+    private static final int UPPERCASE_TAG = 45_548;
+    private static final int TAG = 45_259;
+    private static final int CLASS = 85_489;
+    private static final int ATTRIBUTE_VALUE = 84_591;
+    private static final int ATTRIBUTE = 55_722;
+    private static final int MISSING_ATTRIBUTE = 75_325;
+    private static final int DESCENDANT = 113_022;
+    private static final int MISSING_TAG = 38_081;
 
-    private static final int UPPERCASE_TAG_BYTES = 1_256;
-    private static final int TAG_BYTES = 1_256;
-    private static final int CLASS_BYTES = 2_608;
-    private static final int ATTRIBUTE_VALUE_BYTES = 2_264;
-    private static final int ATTRIBUTE_BYTES = 1_568;
-    private static final int MISSING_ATTRIBUTE_BYTES = 1_576;
-    private static final int DESCENDANT_BYTES = 3_240;
-    private static final int MISSING_TAG_BYTES = 576;
+    private static final int UPPERCASE_TAG_BYTES = 1_096;
+    private static final int TAG_BYTES = 1_096;
+    private static final int CLASS_BYTES = 2_376;
+    private static final int ATTRIBUTE_VALUE_BYTES = 2_024;
+    private static final int ATTRIBUTE_BYTES = 1_336;
+    private static final int MISSING_ATTRIBUTE_BYTES = 1_344;
+    private static final int DESCENDANT_BYTES = 3_016;
+    private static final int MISSING_TAG_BYTES = 416;
 
     @Test @Timeout(180) void instructionBudget() throws Exception {
         // Fail rather than silently skip the performance gate in a different environment.

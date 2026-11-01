@@ -16,6 +16,7 @@
  */
 package com.github.azazar.uncaringhtmlparser.util;
 
+import java.nio.CharBuffer;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -32,6 +33,19 @@ public class HtmlUtilTest {
     public void testStripHtml() {
         assertEquals("весь текст", HtmlUtil.stripHtml("<i class=\"icon-check book-status-icon icon-v-middle\"></i>весь текст").toString());
         assertEquals(" весь текст", HtmlUtil.stripHtml("<i class=\"icon-check book-status-icon icon-v-middle\"></i> весь текст").toString());
+    }
+
+    @Test
+    public void testAttributeScannerSkipsBooleanAndQuotedValues() {
+        for (String separator : new String[]{" ", "\t", "\r\n", "/"}) {
+            CharBuffer attrs = CharBuffer.wrap(separator + "disabled" + separator
+                    + "data-id='wrong' title=\" id='fake'\" ID \t=\n'right'");
+            assertEquals("right", HtmlUtil.attributeValue(attrs, "id"));
+            assertTrue(HtmlUtil.attributePosition(attrs, "disabled") >= 0);
+            assertNull(HtmlUtil.attributeValue(attrs, "disabled"));
+            assertEquals(-1, HtmlUtil.attributePosition(attrs, "missing"));
+            assertEquals(0, attrs.position());
+        }
     }
     
 }
