@@ -5,6 +5,27 @@
     <artifactId>uncaring-html-parser</artifactId>
     <version>0.9.9-SNAPSHOT</version>
     <packaging>jar</packaging>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.13.0</version>
+                <configuration><testRelease>25</testRelease></configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.2.5</version>
+                <configuration>
+                    <workingDirectory>${project.build.directory}</workingDirectory>
+                    <systemPropertyVariables>
+                        <project.root>${project.basedir}</project.root>
+                    </systemPropertyVariables>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
     <dependencies>
         <dependency>
             <groupId>org.junit.jupiter</groupId>

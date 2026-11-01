@@ -18,3 +18,8 @@ new Html(html).css("a.link").filter(a -> a.attr("href").contains("http:")).forEa
 
 I'm not planning to upload it to any public Maven repositories, but it can be
 linked using [JitPack repository](https://jitpack.io/#azazar/uncaring-html-parser "JitPack repository").
+## Development
+
+Run `mvn test` with the pinned JDK 25 to execute correctness and instruction-regression tests.
+See [PERFORMANCE.md](PERFORMANCE.md) for the counting scope and baseline updates.
+The library itself targets Java 11.
