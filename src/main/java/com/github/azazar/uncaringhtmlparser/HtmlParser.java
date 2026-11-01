@@ -16,10 +16,10 @@
  */
 package com.github.azazar.uncaringhtmlparser;
 
+import com.github.azazar.uncaringhtmlparser.util.HtmlUtil;
 import com.github.azazar.uncaringhtmlparser.util.LazyCharSequence;
 import java.nio.CharBuffer;
 import java.util.Iterator;
-import org.apache.commons.lang3.StringUtils;
 
 /**
  *
@@ -29,8 +29,16 @@ public class HtmlParser {
     
     private static final CharBuffer EMPTY_BUFFER = CharBuffer.allocate(0);
     
+    private static int findTag(CharBuffer html, String name, int start) {
+        int limit = html.length() - name.length();
+        for (int i = start; i < limit; i++) {
+            if (html.charAt(i) == '<' && HtmlUtil.matches(html, i + 1, name)) return i;
+        }
+        return -1;
+    }
+
     public static Iterator<HtmlElement> byTagName(CharBuffer html, String tagName) {
-        String tagSearch = "<" + tagName;
+        int tagSearchLength = tagName.length() + 1;
 
         return new Iterator<HtmlElement>() {
 
@@ -39,21 +47,32 @@ public class HtmlParser {
             
             private boolean parseNext() {
                 while(position < html.length()) {
-                    position = StringUtils.indexOfIgnoreCase(html, tagSearch, position);
+                    position = findTag(html, tagName, position);
 
                     if (position == -1) {
                         break;
                     }
 
-                    position += tagSearch.length();
+                    position += tagSearchLength;
 
+                    if (position == html.length()) break;
                     char ch = html.charAt(position);
 
-                    if (ch != '>' && !Character.isWhitespace(ch)) {
+                    if (ch != '>' && ch != '/' && !Character.isWhitespace(ch)) {
                         continue;
                     }
 
-                    int tagEnd = StringUtils.indexOf(html, '>', position);
+                    int endOfTag = position;
+                    char quote = 0;
+                    for (; endOfTag < html.length(); endOfTag++) {
+                        char c = html.charAt(endOfTag);
+                        if (quote != 0) {
+                            if (c == quote) quote = 0;
+                        }
+                        else if (c == '\'' || c == '"') quote = c;
+                        else if (c == '>') break;
+                    }
+                    final int tagEnd = endOfTag == html.length() ? -1 : endOfTag;
 
                     if (tagEnd == -1) {
                         break;
@@ -79,7 +98,7 @@ public class HtmlParser {
                             if (html.charAt(i) == '/') {
                                 i++;
                                 
-                                if (StringUtils.equalsAnyIgnoreCase(html.subSequence(i, i + tagName.length()), tagName)) {
+                                if (HtmlUtil.matches(html, i, tagName)) {
                                     depth--;
 
                                     if (depth == -1) {
@@ -91,7 +110,7 @@ public class HtmlParser {
                                 continue;
                             }
                             else {
-                                if (StringUtils.equalsAnyIgnoreCase(html.subSequence(i, i + tagName.length()), tagName)) {
+                                if (HtmlUtil.matches(html, i, tagName)) {
                                     depth++;
                                     
                                     i += tagName.length() + 1;
@@ -117,18 +136,16 @@ public class HtmlParser {
             
             @Override
             public boolean hasNext() {
+                if (next != null) return true;
                 if (position == html.length())
                     return false;
                 
-                if (next == null) {
-                    return parseNext();
-                }
-                
-                return true;
+                return parseNext();
             }
 
             @Override
             public HtmlElement next() {
+                if (next == null && !hasNext()) throw new java.util.NoSuchElementException();
                 HtmlElement retVal = next;
                 next = null;
                 return retVal;

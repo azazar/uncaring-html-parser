@@ -41,6 +41,7 @@ public class HtmlUtil {
             int end = StringUtils.indexOf(html, '>', ofs + 1);
             
             if (end == -1) {
+                pos = ofs;
                 break;
             }
             
@@ -52,11 +53,48 @@ public class HtmlUtil {
         return r;
     }
     
-    public static String attributeValue(CharBuffer attrs, String attributeName) {
-        int i = StringUtils.indexOfIgnoreCase(attrs, attributeName);
+    public static int attributePosition(CharBuffer attrs, String attributeName) {
+        int i = 0;
+        while (i < attrs.length()) {
+            while (i < attrs.length() && (isSpace(attrs.charAt(i)) || attrs.charAt(i) == '/')) i++;
+            int start = i;
+            while (i < attrs.length() && !isSpace(attrs.charAt(i)) && attrs.charAt(i) != '=' && attrs.charAt(i) != '/') i++;
+            boolean match = i - start == attributeName.length()
+                    && matches(attrs, start, attributeName);
+            while (i < attrs.length() && isSpace(attrs.charAt(i))) i++;
+            if (match) {
+                return start;
+            }
+            if (i < attrs.length() && attrs.charAt(i) == '=') {
+                i++;
+                while (i < attrs.length() && isSpace(attrs.charAt(i))) i++;
+                if (i < attrs.length() && (attrs.charAt(i) == '\'' || attrs.charAt(i) == '"')) {
+                    char quote = attrs.charAt(i++);
+                    while (i < attrs.length() && attrs.charAt(i) != quote) i++;
+                    if (i < attrs.length()) i++;
+                } else while (i < attrs.length() && !isSpace(attrs.charAt(i))) i++;
+            }
+        }
+        return -1;
+    }
 
-        if (i == -1)
-            return null;
+    /** Compares a known in-bounds region without allocating a subsequence. */
+    public static boolean matches(CharBuffer attrs, int start, String name) {
+        for (int j = 0; j < name.length(); j++) {
+            char a = attrs.charAt(start + j), b = name.charAt(j);
+            if (a != b && Character.toLowerCase(a) != Character.toLowerCase(b)) return false;
+        }
+        return true;
+    }
+
+    private static String decode(CharBuffer attrs, int start, int end) {
+        String value = attrs.subSequence(start, end).toString();
+        return value.indexOf('&') < 0 ? value : StringEscapeUtils.unescapeHtml4(value);
+    }
+
+    public static String attributeValue(CharBuffer attrs, String attributeName) {
+        int i = attributePosition(attrs, attributeName);
+        if (i < 0) return null;
 
         i += attributeName.length();
 
@@ -80,7 +118,7 @@ public class HtmlUtil {
             attrEnd = StringUtils.indexOf(attrs, delim, i);
 
             if (attrEnd != -1)
-                return StringEscapeUtils.unescapeHtml4(attrs.subSequence(i, attrEnd).toString());
+                return decode(attrs, i, attrEnd);
         }
         else {
             attrEnd = i;
@@ -91,7 +129,7 @@ public class HtmlUtil {
 
                 attrEnd++;
             }
-            return StringEscapeUtils.unescapeHtml4(attrs.subSequence(i, attrEnd).toString());
+            return decode(attrs, i, attrEnd);
         }
         
         return null;

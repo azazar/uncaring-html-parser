@@ -36,7 +36,8 @@ public class HtmlParserTest {
         assertEquals(1, HTML.tag("div").filter(e -> "overlib".equals(e.id())).count());
         assertEquals(1, HTML.tag("form").filter(e -> "searchTorrent".equals(e.id())).findAny().get().tag("input").filter(e -> e.attrOrNull("x-webkit-speech") != null).count());
         assertEquals(157, HTML.css("a").count());
-        assertEquals(130, HTML.css("a[href]").count());
+        // Includes 25 links whose onmouseover attributes contain a quoted >.
+        assertEquals(155, HTML.css("a[href]").count());
         assertEquals(157, HTML.css("body a").count());
         assertEquals(1, HTML.css("div#overlib").count());
         assertEquals(1, HTML.css("div[id='overlib']").count());

@@ -1,0 +1,62 @@
+{
+  "identity": {
+    "jdk": "openjdk 25.0.4.1 2026-08-18 LTS\nOpenJDK Runtime Environment Temurin-25.0.4.1+1 (build 25.0.4.1+1-LTS)\nOpenJDK 64-Bit Server VM Temurin-25.0.4.1+1 (build 25.0.4.1+1-LTS, mixed mode, sharing)\n",
+    "javac": "javac 25.0.4.1\n",
+    "sha256": {
+      "benchmarks/InstructionBenchmark.java": "5a0f5cb15868e19907712a5c2ca7522c7ebe0c5d87583c0ce51834fc2938a2dc",
+      "benchmarks/instructions.c": "1944e4fda45ec09ed25b8d9a4c49abe9b79fcc69cb33435a36048c3f8820a1f1",
+      "commons-lang3-3.18.0.jar": "4eeeae8d20c078abb64b015ec158add383ac581571cddc45c68f0c9ae0230720",
+      "commons-text-1.10.0.jar": "770cd903fa7b604d1f7ef7ba17f84108667294b2b478be8ed1af3bffb4ae0018"
+    },
+    "vm_options": [
+      "--enable-native-access=ALL-UNNAMED",
+      "-Xint",
+      "-Xms256m",
+      "-Xmx256m",
+      "-XX:+UseSerialGC",
+      "-XX:ActiveProcessorCount=1"
+    ]
+  },
+  "runs": [
+    {
+      "a": 433005,
+      "a.link": 955499,
+      "a[href]": 574087,
+      "div a": 1094756,
+      "missing": 366728,
+      "A": 435949,
+      "a[missing]": 855810,
+      "a[class='link']": 927231
+    },
+    {
+      "a": 433005,
+      "a.link": 955499,
+      "a[href]": 574087,
+      "div a": 1094756,
+      "missing": 366728,
+      "A": 435949,
+      "a[missing]": 855810,
+      "a[class='link']": 927231
+    },
+    {
+      "a": 433005,
+      "a.link": 955499,
+      "a[href]": 574087,
+      "div a": 1094756,
+      "missing": 366728,
+      "A": 435949,
+      "a[missing]": 855810,
+      "a[class='link']": 927231
+    }
+  ],
+  "statuses": {
+    "a": "PASS",
+    "a.link": "PASS",
+    "a[href]": "PASS",
+    "div a": "PASS",
+    "missing": "PASS",
+    "A": "PASS",
+    "a[missing]": "PASS",
+    "a[class='link']": "PASS"
+  }
+}

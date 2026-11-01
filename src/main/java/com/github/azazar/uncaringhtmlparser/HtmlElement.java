@@ -105,7 +105,7 @@ public class HtmlElement {
     }
 
     public boolean hasAttr(String name) {
-        return StringUtils.containsIgnoreCase(attrs, " " + name);
+        return HtmlUtil.attributePosition(attrs, name) >= 0;
     }
     
     public String id() {
@@ -123,7 +123,7 @@ public class HtmlElement {
             classes = NO_CLASSES;
             
             if (classAttr != null) {
-                classes = StringUtils.split(classAttr.trim(), ' ');
+                classes = StringUtils.split(classAttr);
             }
         }
         

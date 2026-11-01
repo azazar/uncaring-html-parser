@@ -76,7 +76,7 @@ public class Selector {
         while (selectorPart.startsWith("[") || selectorPart.startsWith(".")) {
             int partEnd = StringUtils.indexOfAny(selectorPart.substring(1), ".[(");
             if (partEnd != -1) {
-                partEnd--;
+                partEnd++;
             }
             String part;
             
