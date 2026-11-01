@@ -11,23 +11,27 @@ import org.junit.jupiter.api.Timeout;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ParserInstructionTest {
-    private static final int UPPERCASE_TAG = 45_548;
-    private static final int TAG = 45_259;
-    private static final int CLASS = 84_699;
-    private static final int ATTRIBUTE_VALUE = 83_801;
-    private static final int ATTRIBUTE = 55_147;
-    private static final int MISSING_ATTRIBUTE = 75_325;
-    private static final int DESCENDANT = 113_022;
-    private static final int MISSING_TAG = 38_081;
+    private static final int UPPERCASE_TAG = 41_023;
+    private static final int TAG = 40_734;
+    private static final int CLASS = 79_096;
+    private static final int ATTRIBUTE_VALUE = 77_958;
+    private static final int ATTRIBUTE = 50_331;
+    private static final int MISSING_ATTRIBUTE = 69_559;
+    private static final int DESCENDANT = 105_955;
+    private static final int MISSING_TAG = 37_687;
+    private static final int PLAIN_TEXT = 1_409;
+    private static final int TAGGED_TEXT = 3_906;
 
-    private static final int UPPERCASE_TAG_BYTES = 1_096;
-    private static final int TAG_BYTES = 1_096;
-    private static final int CLASS_BYTES = 2_376;
-    private static final int ATTRIBUTE_VALUE_BYTES = 2_024;
-    private static final int ATTRIBUTE_BYTES = 1_336;
-    private static final int MISSING_ATTRIBUTE_BYTES = 1_344;
-    private static final int DESCENDANT_BYTES = 3_016;
-    private static final int MISSING_TAG_BYTES = 416;
+    private static final int UPPERCASE_TAG_BYTES = 1_040;
+    private static final int TAG_BYTES = 1_040;
+    private static final int CLASS_BYTES = 2_320;
+    private static final int ATTRIBUTE_VALUE_BYTES = 1_968;
+    private static final int ATTRIBUTE_BYTES = 1_280;
+    private static final int MISSING_ATTRIBUTE_BYTES = 1_288;
+    private static final int DESCENDANT_BYTES = 2_648;
+    private static final int MISSING_TAG_BYTES = 360;
+    private static final int PLAIN_TEXT_BYTES = 56;
+    private static final int TAGGED_TEXT_BYTES = 120;
 
     @Test @Timeout(180) void instructionBudget() throws Exception {
         // Fail rather than silently skip the performance gate in a different environment.
@@ -36,7 +40,7 @@ class ParserInstructionTest {
         assertEquals("-Xint -Xms64m -Xmx128m -XX:+UnlockExperimentalVMOptions -XX:+UseEpsilonGC -XX:ActiveProcessorCount=1", JdiInstructionCounter.OPTIONS);
         assertEquals("ec88f6e6634ca92b9ba489f48a06e83e559d8f7bbc820f834c42ce2da060cfec",
                 digest(JdiInstructionCounter.class.getResourceAsStream("JdiInstructionCounter.class")), "Counter changed");
-        assertEquals("64e12dea6d092ccb54c2d2d78c0e9e2ac8ac653f54a083877f23bffb1afbbe24",
+        assertEquals("4f1fb299e6e140908767c538b9fece44a2f1cfafc5af41c43a695d7f1acbba51",
                 digest(ParserWorkload.class.getResourceAsStream("ParserWorkload.class")), "Workload changed");
         assertEquals("4eeeae8d20c078abb64b015ec158add383ac581571cddc45c68f0c9ae0230720",
                 jarDigest(org.apache.commons.lang3.StringUtils.class), "commons-lang3 changed");
@@ -49,11 +53,13 @@ class ParserInstructionTest {
         Map<String, Integer> expected = Map.of(
                 "A", UPPERCASE_TAG, "a", TAG, "a.link", CLASS,
                 "a[class='link']", ATTRIBUTE_VALUE, "a[href]", ATTRIBUTE,
-                "a[missing]", MISSING_ATTRIBUTE, "div a", DESCENDANT, "missing", MISSING_TAG);
+                "a[missing]", MISSING_ATTRIBUTE, "div a", DESCENDANT, "missing", MISSING_TAG,
+                "plain-text", PLAIN_TEXT, "tagged-text", TAGGED_TEXT);
         Map<String, Integer> expectedBytes = Map.of(
                 "A", UPPERCASE_TAG_BYTES, "a", TAG_BYTES, "a.link", CLASS_BYTES,
                 "a[class='link']", ATTRIBUTE_VALUE_BYTES, "a[href]", ATTRIBUTE_BYTES,
-                "a[missing]", MISSING_ATTRIBUTE_BYTES, "div a", DESCENDANT_BYTES, "missing", MISSING_TAG_BYTES);
+                "a[missing]", MISSING_ATTRIBUTE_BYTES, "div a", DESCENDANT_BYTES, "missing", MISSING_TAG_BYTES,
+                "plain-text", PLAIN_TEXT_BYTES, "tagged-text", TAGGED_TEXT_BYTES);
         assertAll(
                 () -> assertBudget(expected, first.instructions(), "instructions"),
                 () -> assertBudget(expectedBytes, first.allocatedBytes(), "allocated bytes"));

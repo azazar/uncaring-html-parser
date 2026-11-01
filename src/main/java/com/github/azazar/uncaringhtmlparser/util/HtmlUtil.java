@@ -31,11 +31,11 @@ public class HtmlUtil {
     }
     
     public static CharSequence stripHtml(CharSequence html) {
+        int pos = 0, ofs = StringUtils.indexOf(html, '<', 0);
+        if (ofs == -1) return html.toString();
+
         StringBuilder r = new StringBuilder(html.length());
-        
-        int pos = 0, ofs;
-        
-        while ((ofs = StringUtils.indexOf(html, '<', pos)) != -1) {
+        do {
             r.append(html, pos, ofs);
             
             int end = StringUtils.indexOf(html, '>', ofs + 1);
@@ -46,7 +46,7 @@ public class HtmlUtil {
             }
             
             pos = end + 1;
-        }
+        } while ((ofs = StringUtils.indexOf(html, '<', pos)) != -1);
         
         r.append(html, pos, html.length());
         
@@ -77,11 +77,14 @@ public class HtmlUtil {
             if (i < length && attrs.charAt(i) == '=') {
                 i++;
                 while (i < length && isSpace(attrs.charAt(i))) i++;
-                if (i < length && (attrs.charAt(i) == '\'' || attrs.charAt(i) == '"')) {
-                    char quote = attrs.charAt(i++);
-                    while (i < length && attrs.charAt(i) != quote) i++;
-                    if (i < length) i++;
-                } else while (i < length && !isSpace(attrs.charAt(i))) i++;
+                if (i < length) {
+                    char quote = attrs.charAt(i);
+                    if (quote == '\'' || quote == '"') {
+                        i++;
+                        while (i < length && attrs.charAt(i) != quote) i++;
+                        if (i < length) i++;
+                    } else while (i < length && !isSpace(attrs.charAt(i))) i++;
+                }
             }
         }
         return -1;
@@ -125,9 +128,10 @@ public class HtmlUtil {
         if (delim == '\'' || delim == '\"') {
             i++;
 
-            attrEnd = StringUtils.indexOf(attrs, delim, i);
+            attrEnd = i;
+            while (attrEnd < length && attrs.charAt(attrEnd) != delim) attrEnd++;
 
-            if (attrEnd != -1)
+            if (attrEnd < length)
                 return decode(attrs, i, attrEnd);
         }
         else {

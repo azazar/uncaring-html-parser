@@ -8,8 +8,33 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class SelectorTest {
     @ParameterizedTest
+    @ValueSource(strings = {"", " ", "   "})
+    void rejectsEmptySelectors(String selector) {
+        assertThrows(IllegalArgumentException.class, () -> new Html("<a></a>").css(selector));
+    }
+
+    @Test
+    void ignoresExtraSelectorSpaces() {
+        Html html = new Html("<section><div><a class='link'>match</a></div></section>");
+        assertEquals(1, html.css("  section   div  a.link  ").count());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"a(", "a.link(", ".link"})
+    void rejectsUnsupportedSuffixes(String selector) {
+        assertThrows(UnsupportedOperationException.class, () -> new Html("<a></a>").css(selector));
+    }
+
+    @Test
+    void rejectsEmptyId() {
+        assertThrows(IllegalArgumentException.class, () -> new Html("<a></a>").css("a#"));
+    }
+
+    @ParameterizedTest
     @ValueSource(strings = {
         "a.link.extra[href='target']",
+        "a.link.extra[href=target]",
+        "a.link.extra[href=\"target\"]",
         "a[href='target'].extra.link",
         "section div a.link.extra[href='target']",
         "section div a[href='target'].extra.link"
@@ -22,6 +47,13 @@ class SelectorTest {
                 + "<a class='link extra'>missing value</a>"
                 + "</div></section>");
         assertEquals("match", html.css(selector).findFirst().orElseThrow().getTextContent());
+        assertEquals(1, html.css(selector).count());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"a[id=]", "a[id='']", "a[id=\"\"]"})
+    void matchesEmptyAttributeValue(String selector) {
+        Html html = new Html("<a id=''></a><a id='other'></a><a></a>");
         assertEquals(1, html.css(selector).count());
     }
 

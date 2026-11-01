@@ -38,7 +38,7 @@ public class HtmlElement {
         this.innerHtml = innerHtml;
     }
     
-    private Html html = null;
+    private Html html;
     
     /**
      * Returns inner html
@@ -112,7 +112,7 @@ public class HtmlElement {
         return attrOrNull("id");
     }
     
-    private String[] classes = null;
+    private String[] classes;
     
     private static final String[] NO_CLASSES = {};
     
@@ -120,10 +120,10 @@ public class HtmlElement {
         if (classes == null) {
             String classAttr = attrOrNull("class");
             
-            classes = NO_CLASSES;
-            
             if (classAttr != null) {
                 classes = StringUtils.split(classAttr);
+            } else {
+                classes = NO_CLASSES;
             }
         }
         

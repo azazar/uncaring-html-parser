@@ -26,7 +26,7 @@ import java.util.function.Supplier;
 public class LazyCharSequence<T extends CharSequence> implements CharSequence {
     
     private Supplier<T> supplier;
-    private T sequence = null;
+    private T sequence;
 
     public LazyCharSequence(Supplier<T> supplier) {
         this.supplier = supplier;

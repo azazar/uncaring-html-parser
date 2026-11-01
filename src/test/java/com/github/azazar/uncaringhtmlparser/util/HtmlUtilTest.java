@@ -36,6 +36,32 @@ public class HtmlUtilTest {
     }
 
     @Test
+    public void testPlainTextIsASnapshot() {
+        StringBuilder source = new StringBuilder("plain text");
+        CharBuffer buffer = CharBuffer.wrap(source);
+        CharSequence result = HtmlUtil.stripHtml(buffer);
+        source.setCharAt(0, 'X');
+        buffer.position(3);
+        assertEquals("plain text", result.toString());
+        assertEquals("", HtmlUtil.stripHtml("").toString());
+        assertEquals("leftmiddleright", HtmlUtil.stripHtml("left<b>middle</b>right").toString());
+        assertEquals("text<unfinished", HtmlUtil.stripHtml("text<unfinished").toString());
+    }
+
+    @Test
+    public void testQuotedAttributeValuesAndBufferBounds() {
+        for (char quote : new char[]{'\'', '"'}) {
+            CharBuffer attrs = CharBuffer.wrap("prefix ID=" + quote + "a&amp;b" + quote + "suffix");
+            attrs.position(6);
+            attrs.limit(attrs.limit() - 6);
+            assertEquals("a&b", HtmlUtil.attributeValue(attrs, "id"));
+            assertEquals(6, attrs.position());
+            assertEquals("", HtmlUtil.attributeValue(CharBuffer.wrap("id=" + quote + quote), "id"));
+            assertNull(HtmlUtil.attributeValue(CharBuffer.wrap("id=" + quote + "unfinished"), "id"));
+        }
+    }
+
+    @Test
     public void testAttributeScannerSkipsBooleanAndQuotedValues() {
         for (String separator : new String[]{" ", "\t", "\r\n", "/"}) {
             CharBuffer attrs = CharBuffer.wrap(separator + "disabled" + separator

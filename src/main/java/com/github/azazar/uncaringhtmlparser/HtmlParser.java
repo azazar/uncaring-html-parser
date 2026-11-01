@@ -20,6 +20,8 @@ import com.github.azazar.uncaringhtmlparser.util.HtmlUtil;
 import com.github.azazar.uncaringhtmlparser.util.LazyCharSequence;
 import java.nio.CharBuffer;
 import java.util.Iterator;
+import java.util.Objects;
+import java.util.function.Consumer;
 
 /**
  *
@@ -29,8 +31,7 @@ public class HtmlParser {
     
     private static final CharBuffer EMPTY_BUFFER = CharBuffer.allocate(0);
     
-    private static int findTag(CharBuffer html, String name, int start) {
-        int limit = html.length() - name.length();
+    private static int findTag(CharBuffer html, String name, int start, int limit) {
         for (int i = start; i < limit; i++) {
             if (html.charAt(i) == '<' && HtmlUtil.matches(html, i + 1, name)) return i;
         }
@@ -42,12 +43,13 @@ public class HtmlParser {
 
         return new Iterator<HtmlElement>() {
 
-            int position = 0;
-            HtmlElement next = null;
+            int position;
+            HtmlElement next;
             
             private boolean parseNext() {
-                while(position < html.length()) {
-                    position = findTag(html, tagName, position);
+                int length = html.length();
+                while(position < length) {
+                    position = findTag(html, tagName, position, length - tagSearchLength + 1);
 
                     if (position == -1) {
                         break;
@@ -55,7 +57,7 @@ public class HtmlParser {
 
                     position += tagSearchLength;
 
-                    if (position == html.length()) break;
+                    if (position == length) break;
                     char ch = html.charAt(position);
 
                     if (ch != '>' && ch != '/' && !Character.isWhitespace(ch)) {
@@ -63,22 +65,23 @@ public class HtmlParser {
                     }
 
                     int endOfTag = position;
-                    char quote = 0;
-                    for (; endOfTag < html.length(); endOfTag++) {
-                        char c = html.charAt(endOfTag);
-                        if (quote != 0) {
-                            if (c == quote) quote = 0;
+                    CharBuffer tagAttrs;
+                    if (ch != '>') {
+                        char quote = 0;
+                        for (endOfTag++; endOfTag < length; endOfTag++) {
+                            char c = html.charAt(endOfTag);
+                            if (quote != 0) {
+                                if (c == quote) quote = 0;
+                            }
+                            else if (c == '\'' || c == '"') quote = c;
+                            else if (c == '>') break;
                         }
-                        else if (c == '\'' || c == '"') quote = c;
-                        else if (c == '>') break;
+                        if (endOfTag == length) break;
+                        tagAttrs = html.subSequence(position, endOfTag);
+                    } else {
+                        tagAttrs = EMPTY_BUFFER;
                     }
-                    final int tagEnd = endOfTag == html.length() ? -1 : endOfTag;
-
-                    if (tagEnd == -1) {
-                        break;
-                    }
-
-                    CharBuffer tagAttrs = html.subSequence(position, tagEnd);
+                    final int tagEnd = endOfTag;
 
                     position = tagEnd + 1;
                     
@@ -130,7 +133,7 @@ public class HtmlParser {
                     return true;
                 }
 
-                position = html.length();
+                position = length;
                 return false;
             }
             
@@ -149,6 +152,16 @@ public class HtmlParser {
                 HtmlElement retVal = next;
                 next = null;
                 return retVal;
+            }
+
+            @Override
+            public void forEachRemaining(Consumer<? super HtmlElement> action) {
+                Objects.requireNonNull(action);
+                while (hasNext()) {
+                    HtmlElement element = next;
+                    next = null;
+                    action.accept(element);
+                }
             }
         };
     }
