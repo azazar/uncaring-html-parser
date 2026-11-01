@@ -33,7 +33,7 @@ class ParserInstructionTest {
     private static final int PLAIN_TEXT_BYTES = 56;
     private static final int TAGGED_TEXT_BYTES = 552;
 
-    @Test @Timeout(3600) void instructionBudget() throws Exception {
+    @Test @Timeout(60) void instructionBudget() throws Exception {
         // Fail rather than silently skip the performance gate in a different environment.
         assertEquals("25.0.4.1+1-LTS/Eclipse Adoptium",
                 System.getProperty("java.runtime.version") + "/" + System.getProperty("java.vendor"), "JDK changed");
