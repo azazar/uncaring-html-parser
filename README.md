@@ -21,5 +21,4 @@ linked using [JitPack repository](https://jitpack.io/#azazar/uncaring-html-parse
 ## Development
 
 Run `mvn test` with the pinned JDK 25 to execute correctness and instruction-regression tests.
-See [PERFORMANCE.md](PERFORMANCE.md) for the counting scope and baseline updates.
 The library itself targets Java 11.
