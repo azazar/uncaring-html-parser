@@ -21,6 +21,7 @@ class ParserInstructionTest {
     private static final int MISSING_TAG = 37_687;
     private static final int PLAIN_TEXT = 1_409;
     private static final int TAGGED_TEXT = 3_906;
+    private static final int REPEATED_FRAGMENT = 168_917;
 
     private static final int UPPERCASE_TAG_BYTES = 1_040;
     private static final int TAG_BYTES = 1_040;
@@ -32,6 +33,7 @@ class ParserInstructionTest {
     private static final int MISSING_TAG_BYTES = 360;
     private static final int PLAIN_TEXT_BYTES = 56;
     private static final int TAGGED_TEXT_BYTES = 120;
+    private static final int REPEATED_FRAGMENT_BYTES = 4_304;
 
     @Test @Timeout(180) void instructionBudget() throws Exception {
         // Fail rather than silently skip the performance gate in a different environment.
@@ -40,7 +42,7 @@ class ParserInstructionTest {
         assertEquals("-Xint -Xms64m -Xmx128m -XX:+UnlockExperimentalVMOptions -XX:+UseEpsilonGC -XX:ActiveProcessorCount=1", JdiInstructionCounter.OPTIONS);
         assertEquals("ec88f6e6634ca92b9ba489f48a06e83e559d8f7bbc820f834c42ce2da060cfec",
                 digest(JdiInstructionCounter.class.getResourceAsStream("JdiInstructionCounter.class")), "Counter changed");
-        assertEquals("4f1fb299e6e140908767c538b9fece44a2f1cfafc5af41c43a695d7f1acbba51",
+        assertEquals("10c8a1ec1c14250e129ab8c6a69634bc3079141526f021ac5ac492bb52ee56b0",
                 digest(ParserWorkload.class.getResourceAsStream("ParserWorkload.class")), "Workload changed");
         assertEquals("4eeeae8d20c078abb64b015ec158add383ac581571cddc45c68f0c9ae0230720",
                 jarDigest(org.apache.commons.lang3.StringUtils.class), "commons-lang3 changed");
@@ -50,16 +52,18 @@ class ParserInstructionTest {
         var first = JdiInstructionCounter.measure();
         var second = JdiInstructionCounter.measure();
         assertEquals(first, second, "Instruction counts differ between fresh JVMs");
-        Map<String, Integer> expected = Map.of(
-                "A", UPPERCASE_TAG, "a", TAG, "a.link", CLASS,
-                "a[class='link']", ATTRIBUTE_VALUE, "a[href]", ATTRIBUTE,
-                "a[missing]", MISSING_ATTRIBUTE, "div a", DESCENDANT, "missing", MISSING_TAG,
-                "plain-text", PLAIN_TEXT, "tagged-text", TAGGED_TEXT);
-        Map<String, Integer> expectedBytes = Map.of(
-                "A", UPPERCASE_TAG_BYTES, "a", TAG_BYTES, "a.link", CLASS_BYTES,
-                "a[class='link']", ATTRIBUTE_VALUE_BYTES, "a[href]", ATTRIBUTE_BYTES,
-                "a[missing]", MISSING_ATTRIBUTE_BYTES, "div a", DESCENDANT_BYTES, "missing", MISSING_TAG_BYTES,
-                "plain-text", PLAIN_TEXT_BYTES, "tagged-text", TAGGED_TEXT_BYTES);
+        Map<String, Integer> expected = Map.ofEntries(
+                Map.entry("A", UPPERCASE_TAG), Map.entry("a", TAG), Map.entry("a.link", CLASS),
+                Map.entry("a[class='link']", ATTRIBUTE_VALUE), Map.entry("a[href]", ATTRIBUTE),
+                Map.entry("a[missing]", MISSING_ATTRIBUTE), Map.entry("div a", DESCENDANT),
+                Map.entry("missing", MISSING_TAG), Map.entry("plain-text", PLAIN_TEXT),
+                Map.entry("tagged-text", TAGGED_TEXT), Map.entry("repeated-fragment", REPEATED_FRAGMENT));
+        Map<String, Integer> expectedBytes = Map.ofEntries(
+                Map.entry("A", UPPERCASE_TAG_BYTES), Map.entry("a", TAG_BYTES), Map.entry("a.link", CLASS_BYTES),
+                Map.entry("a[class='link']", ATTRIBUTE_VALUE_BYTES), Map.entry("a[href]", ATTRIBUTE_BYTES),
+                Map.entry("a[missing]", MISSING_ATTRIBUTE_BYTES), Map.entry("div a", DESCENDANT_BYTES),
+                Map.entry("missing", MISSING_TAG_BYTES), Map.entry("plain-text", PLAIN_TEXT_BYTES),
+                Map.entry("tagged-text", TAGGED_TEXT_BYTES), Map.entry("repeated-fragment", REPEATED_FRAGMENT_BYTES));
         assertAll(
                 () -> assertBudget(expected, first.instructions(), "instructions"),
                 () -> assertBudget(expectedBytes, first.allocatedBytes(), "allocated bytes"));
