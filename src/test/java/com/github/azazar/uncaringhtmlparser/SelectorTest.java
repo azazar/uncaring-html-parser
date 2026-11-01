@@ -1,12 +1,24 @@
 package com.github.azazar.uncaringhtmlparser;
 
 import java.nio.CharBuffer;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import static org.junit.jupiter.api.Assertions.*;
 
 class SelectorTest {
+    @Test
+    void descendantSelectorsStayInsideMatchingParents() {
+        Html html = new Html("<a id='before'></a><section class='selected'>"
+                + "<a id='direct'></a><div><a id='nested'></a></div></section>"
+                + "<section><div><a id='other'></a></div></section><a id='after'></a>");
+        assertEquals(List.of("direct", "nested"),
+                html.css("section.selected a").map(HtmlElement::id).toList());
+        assertEquals(List.of("nested"),
+                html.css("section.selected div a").map(HtmlElement::id).toList());
+    }
+
     @ParameterizedTest
     @ValueSource(strings = {"", " ", "   "})
     void rejectsEmptySelectors(String selector) {
