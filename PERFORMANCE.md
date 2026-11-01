@@ -43,20 +43,20 @@ bodies fails this project's required coverage.
 
 ## Baseline ratchet
 
-The committed baseline is
-`src/test/resources/performance/instructions.properties`. The latest measurement
-is written to `target/instruction-results.properties`.
+The baseline is eight `static final int` constants in `ParserInstructionTest`.
+JUnit `assertEquals` checks every scenario, and `assertAll` reports all mismatches.
+No baseline or report files are read or written.
 
-- Any increased count fails, including with `-Dperformance.update=true`.
+- Any increased count fails with `REGRESSION`.
 - Any decreased count fails with `UPDATE_REQUIRED` until explicitly accepted.
-- Equal counts pass without rewriting the baseline.
-- Accept improvements with `mvn test -Dperformance.update=true`, then commit
-  the tighter baseline. Every scenario is checked before an atomic file write.
+- Equal counts pass.
+- Accept improvements by lowering the corresponding Java constants to the
+  measured values reported by JUnit, then rerun `mvn test` and commit.
 
 The JDK, VM options, workload/counter bytecode and library hashes are pinned.
-A mismatch fails. For an explicitly reviewed metric migration, remove the old
-baseline and run `mvn test -Dperformance.initialize=true`. Initialization refuses
-to overwrite an existing baseline. Do not initialize to accept a slowdown.
+A mismatch fails an assertion rather than silently disabling the test.
+Changes to these conditions require an explicit review of the metric and its
+Java assertions. Do not raise the constants to accept a slowdown.
 
 The workload and measurement boundaries changed during the migration from the
 standalone native counter. Old and new totals are not compared as a speed gain.

@@ -1,64 +1,58 @@
 package com.github.azazar.uncaringhtmlparser.performance;
 
-import java.io.*;
-import java.nio.file.*;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.MessageDigest;
-import java.util.*;
+import java.util.HexFormat;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ParserInstructionTest {
-    private static final Path ROOT = Path.of(System.getProperty("project.root"));
-    private static final Path BASELINE = ROOT.resolve("src/test/resources/performance/instructions.properties");
+    private static final int UPPERCASE_TAG = 45_946;
+    private static final int TAG = 45_657;
+    private static final int CLASS = 99_714;
+    private static final int ATTRIBUTE_VALUE = 98_924;
+    private static final int ATTRIBUTE = 61_794;
+    private static final int MISSING_ATTRIBUTE = 90_348;
+    private static final int DESCENDANT = 113_680;
+    private static final int MISSING_TAG = 38_479;
 
     @Test @Timeout(180) void instructionBudget() throws Exception {
-        boolean initialize = Boolean.getBoolean("performance.initialize");
-        boolean update = Boolean.getBoolean("performance.update");
-        assertFalse(initialize && Files.exists(BASELINE), "Initialization cannot overwrite an existing baseline");
-        assertTrue(initialize || Files.exists(BASELINE), "Missing baseline: explicitly use -Dperformance.initialize=true");
-        Properties metadata = new Properties();
-        metadata.setProperty("metadata.engine", "JDK JDI STEP_MIN/STEP_INTO; no class exclusions");
-        metadata.setProperty("metadata.options", JdiInstructionCounter.OPTIONS);
-        metadata.setProperty("metadata.jdk", System.getProperty("java.runtime.version") + "/" + System.getProperty("java.vendor"));
-        for (Class<?> type : List.of(ParserWorkload.class, JdiInstructionCounter.class)) {
-            metadata.setProperty("metadata.class." + type.getSimpleName(), digest(type.getResourceAsStream(type.getSimpleName() + ".class")));
-        }
-        for (Class<?> type : List.of(org.apache.commons.lang3.StringUtils.class, org.apache.commons.text.StringEscapeUtils.class)) {
-            Path jar = Path.of(type.getProtectionDomain().getCodeSource().getLocation().toURI());
-            metadata.setProperty("metadata.jar." + type.getName(), digest(Files.newInputStream(jar)));
-        }
-        Properties previous = new Properties();
-        if (Files.exists(BASELINE)) {
-            try (Reader reader = Files.newBufferedReader(BASELINE)) { previous.load(reader); }
-            for (String key : metadata.stringPropertyNames()) {
-                assertEquals(previous.getProperty(key), metadata.getProperty(key), "Measurement environment changed: " + key);
-            }
-        }
+        // Fail rather than silently skip the performance gate in a different environment.
+        assertEquals("25.0.4.1+1-LTS/Eclipse Adoptium",
+                System.getProperty("java.runtime.version") + "/" + System.getProperty("java.vendor"), "JDK changed");
+        assertEquals("-Xint -Xms64m -Xmx128m -XX:+UseSerialGC -XX:ActiveProcessorCount=1", JdiInstructionCounter.OPTIONS);
+        assertEquals("8881c85c011297c5b5e5946937ed814fcceedc723884fb0884c0cfe09f27bf4f",
+                digest(JdiInstructionCounter.class.getResourceAsStream("JdiInstructionCounter.class")), "Counter changed");
+        assertEquals("38f3303174da668a92aa46d7d97b24a4d1272b5f7b568ca85e23f5a2ae716e14",
+                digest(ParserWorkload.class.getResourceAsStream("ParserWorkload.class")), "Workload changed");
+        assertEquals("4eeeae8d20c078abb64b015ec158add383ac581571cddc45c68f0c9ae0230720",
+                jarDigest(org.apache.commons.lang3.StringUtils.class), "commons-lang3 changed");
+        assertEquals("770cd903fa7b604d1f7ef7ba17f84108667294b2b478be8ed1af3bffb4ae0018",
+                jarDigest(org.apache.commons.text.StringEscapeUtils.class), "commons-text changed");
 
         var first = JdiInstructionCounter.measure();
         var second = JdiInstructionCounter.measure();
         assertEquals(first, second, "Instruction counts differ between fresh JVMs");
-        Properties measured = new Properties();
-        measured.putAll(metadata);
-        first.instructions().forEach((name, count) -> measured.setProperty("count." + name, count.toString()));
-        first.jdkInstructions().forEach((name, count) -> measured.setProperty("jdk." + name, count.toString()));
-        Path report = ROOT.resolve("target/instruction-results.properties");
-        try (Writer writer = Files.newBufferedWriter(report)) { measured.store(writer, "Java bytecodes including JDK"); }
-        Map<String, Long> expected = new TreeMap<>();
-        previous.stringPropertyNames().stream().filter(k -> k.startsWith("count.")).forEach(k ->
-                expected.put(k.substring(6), Long.parseLong(previous.getProperty(k))));
-        Map<String, InstructionBudget.Status> statuses = InstructionBudget.compare(first.instructions(), initialize ? first.instructions() : expected);
-        statuses.forEach((name, status) -> System.out.println(name + ": " + first.instructions().get(name)
-                + " instructions (JDK: " + first.jdkInstructions().get(name) + "); " + status));
-        boolean improved = InstructionBudget.requireAcceptable(statuses, update);
-        if (initialize || (improved && update)) {
-            Path temporary = Files.createTempFile(BASELINE.getParent(), "instructions-", ".tmp");
-            try {
-                try (Writer writer = Files.newBufferedWriter(temporary)) { measured.store(writer, "Instruction baseline; lower is better"); }
-                Files.move(temporary, BASELINE, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
-            } finally { Files.deleteIfExists(temporary); }
-        }
+        Map<String, Integer> expected = Map.of(
+                "A", UPPERCASE_TAG, "a", TAG, "a.link", CLASS,
+                "a[class='link']", ATTRIBUTE_VALUE, "a[href]", ATTRIBUTE,
+                "a[missing]", MISSING_ATTRIBUTE, "div a", DESCENDANT, "missing", MISSING_TAG);
+        assertEquals(expected.keySet(), first.instructions().keySet(), "Scenarios changed");
+        assertAll(expected.entrySet().stream().map(entry -> () -> {
+            long actual = first.instructions().get(entry.getKey());
+            assertEquals(entry.getValue().longValue(), actual, () -> entry.getKey() + ": "
+                    + (actual < entry.getValue()
+                    ? "UPDATE_REQUIRED: lower the corresponding static final int to " + actual
+                    : "REGRESSION: instruction count increased"));
+        }));
+    }
+
+    private static String jarDigest(Class<?> type) throws Exception {
+        return digest(Files.newInputStream(Path.of(type.getProtectionDomain().getCodeSource().getLocation().toURI())));
     }
 
     private static String digest(InputStream stream) throws Exception {

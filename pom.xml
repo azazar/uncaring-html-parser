@@ -19,9 +19,6 @@
                 <version>3.2.5</version>
                 <configuration>
                     <workingDirectory>${project.build.directory}</workingDirectory>
-                    <systemPropertyVariables>
-                        <project.root>${project.basedir}</project.root>
-                    </systemPropertyVariables>
                 </configuration>
             </plugin>
         </plugins>
