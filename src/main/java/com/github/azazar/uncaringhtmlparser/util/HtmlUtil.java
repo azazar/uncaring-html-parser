@@ -104,6 +104,35 @@ public class HtmlUtil {
         return value.indexOf('&') < 0 ? value : StringEscapeUtils.unescapeHtml4(value);
     }
 
+    /** Compares a value in place, allocating a decoded string only for HTML entities. */
+    public static boolean attributeMatches(CharBuffer attrs, String attributeName, String expected) {
+        int i = attributePosition(attrs, attributeName);
+        if (i < 0) return false;
+        int length = attrs.length();
+        i += attributeName.length();
+        while (i < length && isSpace(attrs.charAt(i))) i++;
+        if (i == length || attrs.charAt(i) != '=') return false;
+        i++;
+        while (i < length && isSpace(attrs.charAt(i))) i++;
+        if (i == length) return false;
+        char quote = attrs.charAt(i);
+        if (quote == '\'' || quote == '"') i++;
+        else quote = 0;
+        int start = i, expectedEnd = i + expected.length();
+        boolean match = true;
+        for (; i < length; i++) {
+            char c = attrs.charAt(i);
+            if (quote == 0 ? isSpace(c) : c == quote) return match && i == expectedEnd;
+            if (c == '&') {
+                int end = i + 1;
+                while (end < length && (quote == 0 ? !isSpace(attrs.charAt(end)) : attrs.charAt(end) != quote)) end++;
+                return (quote == 0 || end < length) && expected.equals(decode(attrs, start, end));
+            }
+            if (match && (i >= expectedEnd || c != expected.charAt(i - start))) match = false;
+        }
+        return quote == 0 && match && i == expectedEnd;
+    }
+
     public static String attributeValue(CharBuffer attrs, String attributeName) {
         int i = attributePosition(attrs, attributeName);
         if (i < 0) return null;

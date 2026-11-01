@@ -16,122 +16,152 @@
  */
 package com.github.azazar.uncaringhtmlparser;
 
-import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
-import org.apache.commons.lang3.StringUtils;
 
 /**
  *
  * @author Mikhail Yevchenko <mail@uo1.net>
  */
 public class Selector {
-    
+
+    /** Parses on each call; retain a {@link #compile(String) compiled selector} for repeated queries. */
     public static Stream<HtmlElement> queryAll(String selector, Html html) {
-        return queryAll(StringUtils.split(selector, ' '), 0, html::tag);
+        return compile(selector).queryAll(html);
     }
-    
+
     private static boolean isTag(char c, int index) {
         if (index == 0)
             return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || c == '_';
 
         return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_' || c == '-';
     }
-    
-    private static Stream<HtmlElement> queryAll(String[] selector, int index, Function<String, Stream<HtmlElement>> find) {
-        if (selector.length == 0)
-            throw new IllegalArgumentException("The provided selector is empty");
-        
-        String selectorPart = selector[index];
-        
-        int i = 0;
-        
-        int length = selectorPart.length();
-        while(i < length && isTag(selectorPart.charAt(i), i)) {
-            i++;
-        }
-        
-        if (i == 0) {
-            throw new UnsupportedOperationException("Selectors without tag name aren't supported by parser");
-        }
-        
-        String tagName = selectorPart.substring(0, i);
-        
-        Stream<HtmlElement> elements = find.apply(tagName);
-        
-        selectorPart = selectorPart.substring(i);
-        
-        if (!selectorPart.isEmpty() && selectorPart.charAt(0) == '#') {
-            String id = selectorPart.substring(1);
-            
-            if (id.isEmpty()) {
-                throw new IllegalArgumentException("Empty id specified");
+
+    /** Parses once for reuse across documents or fragments; each query creates a fresh lazy stream. */
+    public static Compiled compile(String selector) {
+        int start = 0;
+        while (start < selector.length() && selector.charAt(start) == ' ') start++;
+        if (start == selector.length()) throw new IllegalArgumentException("The provided selector is empty");
+        return new Compiled(selector, start);
+    }
+
+    /** A reusable selector plan. It holds no document or query results. */
+    public static final class Compiled {
+        private final String tagName;
+        private final Predicate<HtmlElement> condition;
+        private final Compiled next;
+
+        private Compiled(String selector, int start) {
+            int end = selector.indexOf(' ', start);
+            String selectorPart = end < 0 ? selector.substring(start) : selector.substring(start, end);
+            int i = 0;
+
+            int length = selectorPart.length();
+            while(i < length && isTag(selectorPart.charAt(i), i)) {
+                i++;
             }
-            
-            elements = elements.filter(e -> id.equals(e.id()));
-            selectorPart = "";
-        }
-        
-        while (!selectorPart.isEmpty()) {
-            char kind = selectorPart.charAt(0);
-            if (kind != '[' && kind != '.') break;
-            int partEnd = -1;
-            for (int p = 1; p < selectorPart.length(); p++) {
-                char c = selectorPart.charAt(p);
-                if (c == '.' || c == '[' || c == '(') {
-                    partEnd = p;
-                    break;
+
+            if (i == 0) {
+                throw new UnsupportedOperationException("Selectors without tag name aren't supported by parser");
+            }
+
+            tagName = selectorPart.substring(0, i);
+
+            Predicate<HtmlElement> condition = null;
+
+            selectorPart = selectorPart.substring(i);
+
+            if (!selectorPart.isEmpty() && selectorPart.charAt(0) == '#') {
+                String id = selectorPart.substring(1);
+
+                if (id.isEmpty()) {
+                    throw new IllegalArgumentException("Empty id specified");
                 }
-            }
-            String part;
-            
-            if (partEnd == -1) {
-                part = selectorPart;
+
+                condition = and(condition, e -> e.getClass() == HtmlElement.class
+                        ? e.hasAttr("id", id) : id.equals(e.id()));
                 selectorPart = "";
             }
-            else {
-                part = selectorPart.substring(0, partEnd);
-                selectorPart = selectorPart.substring(partEnd);
-            }
-            
-            if (kind == '.') {
-                String clazz = part.substring(1);
-                elements = elements.filter(e -> e.hasClass(clazz));
-            }
-            else {
-                part = part.substring(1, part.length() - 1).trim();
-                i = part.indexOf('=');
-                
-                if (i == -1) {
-                    String attrName = part;
-                    elements = elements.filter(e -> e.hasAttr(attrName));
+
+            while (!selectorPart.isEmpty()) {
+                char kind = selectorPart.charAt(0);
+                if (kind != '[' && kind != '.') break;
+                int partEnd = -1;
+                for (int p = 1; p < selectorPart.length(); p++) {
+                    char c = selectorPart.charAt(p);
+                    if (c == '.' || c == '[' || c == '(') {
+                        partEnd = p;
+                        break;
+                    }
+                }
+                String part;
+
+                if (partEnd == -1) {
+                    part = selectorPart;
+                    selectorPart = "";
                 }
                 else {
-                    String attrName = part.substring(0, i).trim();
-                    String value = part.substring(i + 1).trim();
+                    part = selectorPart.substring(0, partEnd);
+                    selectorPart = selectorPart.substring(partEnd);
+                }
 
-                    if (!value.isEmpty()) {
-                        char quote = value.charAt(0);
-                        if ((quote == '\'' || quote == '"') && value.charAt(value.length() - 1) == quote) {
-                            value = value.substring(1, value.length() - 1);
-                        }
+                if (kind == '.') {
+                    String clazz = part.substring(1);
+                    condition = and(condition, e -> e.hasClass(clazz));
+                }
+                else {
+                    part = part.substring(1, part.length() - 1).trim();
+                    i = part.indexOf('=');
+
+                    if (i == -1) {
+                        String attrName = part;
+                        condition = and(condition, e -> e.hasAttr(attrName));
                     }
-                    
-                    String value_ = value;
+                    else {
+                        String attrName = part.substring(0, i).trim();
+                        String value = part.substring(i + 1).trim();
 
-                    elements = elements.filter(e -> value_.equals(e.attrOrNull(attrName)));
+                        if (!value.isEmpty()) {
+                            char quote = value.charAt(0);
+                            if ((quote == '\'' || quote == '"') && value.charAt(value.length() - 1) == quote) {
+                                value = value.substring(1, value.length() - 1);
+                            }
+                        }
+
+                        String value_ = value;
+
+                        condition = and(condition, e -> e.getClass() == HtmlElement.class
+                                ? e.hasAttr(attrName, value_) : value_.equals(e.attrOrNull(attrName)));
+                    }
                 }
             }
+
+            if (!selectorPart.isEmpty()) {
+                throw new UnsupportedOperationException("Unsupported selector part (" + selectorPart + ')');
+            }
+
+            this.condition = condition;
+            int nextStart = end;
+            if (nextStart >= 0) {
+                while (nextStart < selector.length() && selector.charAt(nextStart) == ' ') nextStart++;
+            }
+            next = nextStart < 0 || nextStart == selector.length() ? null : new Compiled(selector, nextStart);
         }
 
-        if (!selectorPart.isEmpty()) {
-            throw new UnsupportedOperationException("Unsupported selector part (" + selectorPart + ')');
+        private static Predicate<HtmlElement> and(Predicate<HtmlElement> first, Predicate<HtmlElement> second) {
+            return first == null ? second : first.and(second);
         }
-        
-        if (index + 1 == selector.length)
+
+        /** Executes against the supplied document without caching elements or consuming the returned stream. */
+        public Stream<HtmlElement> queryAll(Html html) {
+            Stream<HtmlElement> elements = html.tag(tagName);
+            if (condition != null) elements = elements.filter(condition);
+            for (Compiled part = next; part != null; part = part.next) {
+                String tag = part.tagName;
+                elements = elements.flatMap(element -> element.tag(tag));
+                if (part.condition != null) elements = elements.filter(part.condition);
+            }
             return elements;
-        
-        Stream<HtmlElement> parents = elements;
-        return queryAll(selector, index + 1, name -> parents.flatMap(e -> e.tag(name)));
+        }
     }
-    
 }

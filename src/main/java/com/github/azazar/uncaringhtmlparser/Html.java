@@ -22,6 +22,8 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 /**
+ * A view of an HTML fragment, without a prebuilt element index.
+ * Views share their backing storage; {@link #getHtml()} produces a string snapshot instead.
  *
  * @author Mikhail Yevchenko <mail@uo1.net>
  */
@@ -37,10 +39,19 @@ public class Html {
         this.html = CharBuffer.wrap(html);
     }
     
+    /**
+     * Lazily scans this fragment on each call. The returned stream is single-use;
+     * retain selected elements or collect results if they will be reused.
+     */
     public Stream<HtmlElement> tag(String tagName) {
         return StreamSupport.stream(Spliterators.spliteratorUnknownSize(HtmlParser.byTagName(html, tagName), 0), false);
     }
     
+    /**
+     * Parses the selector and creates a fresh query on each call.
+     * Like {@link #tag(String)}, query results are not cached and the stream is single-use.
+     * Reuse {@link Selector#compile(String)} to avoid parsing the same selector again.
+     */
     public Stream<HtmlElement> css(String selector) {
         return Selector.queryAll(selector, this);
     }
@@ -55,10 +66,12 @@ public class Html {
         return css(selector);
     }
 
+    /** Returns an uncached string snapshot; retain it if the same text is needed again. */
     public String getHtml() {
         return html.toString();
     }
     
+    /** Returns a new read-only view sharing the source storage, not a snapshot. */
     public CharBuffer getBuffer() {
         return html.asReadOnlyBuffer();
     }

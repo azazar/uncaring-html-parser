@@ -7,6 +7,35 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class HtmlParserScanningTest {
     @Test
+    void unterminatedParentHasNoDescendants() {
+        var parent = new Html("<section><a id='inside'></a>")
+                .tag("section").findFirst().orElseThrow();
+        assertTrue(parent.tag("a").findFirst().isEmpty());
+        assertEquals(0, parent.css("a").count());
+    }
+
+    @Test
+    void fixesBoundsBeforeTraversalButReadsDescendantsLazily() {
+        String original = "<section><b id='inside'></b></section><a id='outside'></a>";
+        char[] source = original.toCharArray();
+        var parent = new Html(CharBuffer.wrap(source)).tag("section").findFirst().orElseThrow();
+        try (var descendants = parent.tag("a")) {
+            source[original.indexOf("</section>") + 2] = 'x';
+            source[original.indexOf("<b") + 1] = 'a';
+            source[original.indexOf("</b") + 2] = 'a';
+            assertEquals(List.of("inside"), descendants.map(HtmlElement::id).toList());
+        }
+    }
+
+    @Test
+    void nestedSameNameParentsKeepTheOuterBoundary() {
+        var parent = new Html("<section><section><a id='nested'></a></section>"
+                + "<a id='direct'></a></section><a id='outside'></a>")
+                .tag("section").findFirst().orElseThrow();
+        assertEquals(List.of("nested", "direct"), parent.tag("a").map(HtmlElement::id).toList());
+    }
+
+    @Test
     void readsOnlyTheSelectedFragmentAndDefersReadingItsContents() {
         String opening = "<section id='selected'>";
         String contents = "<a id='one'></a><div><a id='two'></a></div>";

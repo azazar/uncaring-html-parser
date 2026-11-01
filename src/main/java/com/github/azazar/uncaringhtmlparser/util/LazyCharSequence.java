@@ -32,6 +32,7 @@ public class LazyCharSequence<T extends CharSequence> implements CharSequence {
         this.supplier = supplier;
     }
 
+    /** Evaluates the supplier once for a non-null result, which need not be a snapshot. */
     public T get() {
         if (sequence == null)
             sequence = supplier.get();

@@ -9,6 +9,15 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class SelectorTest {
     @Test
+    void shortCircuitsBeforeDecodingLaterAttributeValues() {
+        Html html = new Html("<a title='&#1114112;' href='target'></a>");
+        assertEquals(0, html.css("a[id='target'][title='title']").count());
+        assertEquals(0, html.css("a.absent[title='title']").count());
+        assertThrows(IllegalArgumentException.class,
+                () -> html.css("a[title='title'][id='target']").count());
+    }
+
+    @Test
     void descendantSelectorsStayInsideMatchingParents() {
         Html html = new Html("<a id='before'></a><section class='selected'>"
                 + "<a id='direct'></a><div><a id='nested'></a></div></section>"

@@ -23,6 +23,8 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
 
 /**
+ * An element view sharing the source storage. Cached fragment boundaries and class
+ * tokens are not invalidated when that storage changes.
  *
  * @author Mikhail Yevchenko <mail@uo1.net>
  */
@@ -41,7 +43,8 @@ public class HtmlElement {
     private Html html;
     
     /**
-     * Returns inner html
+     * Returns the cached inner HTML view. The first access finds the fragment boundary;
+     * reusing this element avoids repeating that work. Queries inside the view still scan it.
      * 
      * @return inner html
      */
@@ -54,7 +57,8 @@ public class HtmlElement {
     }
     
     /**
-     * Returns all elements matching specified tag name
+     * Returns a fresh, single-use stream of matching descendants within {@link #html()}.
+     * Retain selected elements or collected results to avoid repeating the search.
      * 
      * @param tagName
      * @return 
@@ -64,7 +68,8 @@ public class HtmlElement {
     }
     
     /**
-     * Returns all elements matching specified selector
+     * Returns a fresh, single-use query within {@link #html()}.
+     * The selector is parsed on each call and matching descendants are not cached.
      * 
      * @param selector
      * @return 
@@ -84,7 +89,8 @@ public class HtmlElement {
     }
 
     /**
-     * Extracts attribute value
+     * Scans and decodes an attribute value on each call. Retain the returned value
+     * when it will be reused, or use {@link #hasAttr(String)} for presence only.
      * 
      * @param name attribute name
      * @return attribute value or null if attribute doesn't exist
@@ -94,7 +100,7 @@ public class HtmlElement {
     }
 
     /**
-     * Extracts attribute value
+     * Extracts an uncached attribute value; see {@link #attrOrNull(String)} for reuse.
      * 
      * @param name attribute name
      * @return attribute value or empty string if attribute doesn't exist
@@ -104,10 +110,16 @@ public class HtmlElement {
         return val == null ? "" : val;
     }
 
+    /** Scans for an attribute without decoding or allocating its value. */
     public boolean hasAttr(String name) {
         return HtmlUtil.attributePosition(attrs, name) >= 0;
     }
+
+    boolean hasAttr(String name, String value) {
+        return HtmlUtil.attributeMatches(attrs, name, value);
+    }
     
+    /** Extracts an uncached ID value; retain it for repeated use. */
     public String id() {
         return attrOrNull("id");
     }
@@ -116,6 +128,10 @@ public class HtmlElement {
     
     private static final String[] NO_CLASSES = {};
     
+    /**
+     * Decodes and caches class tokens on the first call. Reuse this element for
+     * multiple class checks; later changes to the source class attribute are not observed.
+     */
     public boolean hasClass(String className) {
         if (classes == null) {
             String classAttr = attrOrNull("class");
@@ -135,6 +151,10 @@ public class HtmlElement {
         return false;
     }
     
+    /**
+     * Removes tags and returns an uncached text snapshot on each call.
+     * Retain the returned string when the same text is needed again.
+     */
     public String getTextContent() {
         return HtmlUtil.stripHtml(innerHtml.get()).toString();
     }
